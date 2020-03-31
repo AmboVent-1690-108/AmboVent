@@ -14,9 +14,9 @@
 #### To include:
 40 Professional Volunteers - Israel’s national EMS, Physicians from leading Israeli hospitals such as Tel Aviv Sourasky and Hadassah JLM as well as other medical centers, Engineers, First Israel mentors and students,  The Haifa Technological Center  Rafael and Israel Aerospace Industries, IAF Unit 108, The garage program by Microsoft Israel  and others...
 
-**Link to our site: https://1nn0v8ter.rocks/AmboVent-1690-108**
+## Link to our site: https://1nn0v8ter.rocks/AmboVent-1690-108
 
-## AmboVent's Standard Copyright and Disclaimer Notice:
+# AmboVent's Standard Copyright and Disclaimer Notice:
 
 *Copyright ©2020. THE AMBOVENT GROUP FROM ISRAEL herby declares:  No Rights Reserved. Anyone in the world have Permission to use, copy, modify, and distribute this software and its documentation for educational, research, for profit, business and not-for-profit purposes, without fee and without a signed licensing agreement, all is hereby granted, provided that the intention of the user is to use this code and documentation to save human lives  anywhere in the world. For any question, contact dreliram@gmail.com.*
 
