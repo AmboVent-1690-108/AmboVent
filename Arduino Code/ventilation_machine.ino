@@ -1,5 +1,12 @@
+/*  
+ *  THIS CODE WAS WRITTEN FOR USE IN A HOME MADE VENTILATION DEVICE. 
+ *  IT IS NOT TESTED FOR SAFETY AND NOT RECOMENDED FOR USE IN ANY COMERCIAL DEVICE.
+ *  IT IS NOT APPROVED BY ANY REGULAOTRY AUTHORITY
+ *  USE ONLY AT YOUR OWN RISK 
+ */
+ 
 // system configuration 
-#define full_configuration 1               //  0 if giora's system - potentiometer on pulley, no sliders, not potenttiometers,
+#define full_configuration 0               //  0 if the partial system - potentiometer on pulley, no potentiometers, ...
 
 #define pressure_sensor_available 1
 
@@ -9,6 +16,17 @@
 
 // UI
 #define deltaUD 5   // define the value chnage per each button press
+
+// clinical 
+#define perc_of_lower_volume 65.0      // % of max press - defines lower volume
+#define perc_of_lower_volume_display 40.0      // % of max press - defines lower volume
+#define wait_time_after_resistance 3  // seconds
+#define max_pres_disconnected 10      // in A2D units /4
+#define insp_pressure_default 40      // hold this pressure while breathing 
+#define safety_pressure 70            // quicly pullnack arm when reaching this
+#define speed_multiplier_reverse 2    // factor of speeed for releasing the pressure (runs motion in reverse at X this speed
+#define smear_factor 0                // 0 to do all cycle in 2.5 seconds and wait for the rest 1 to "smear" the motion profile on the whole cycle time 
+
 
 #if (full_configuration==0)  // Arm connected with strip or wire
   #define LCD_available 0 
@@ -24,7 +42,7 @@
   #define pin_AD 8    // Amp Down
   #define pin_AU 6    // Amp Up
 
-  #define sliders 0    // 1 = control with potentiometers  0 = with push buttons
+  #define control_with_pot 0    // 1 = control with potentiometers  0 = with push buttons
   
   #define F 0.6       // motion control feed forward  
   #define KP 0.2      // motion control propportional gain 
@@ -42,14 +60,14 @@
   #define pin_LED_AMP 13    // amplitude LED
   #define pin_LED_FREQ 13   // frequency LED
   #define pin_LED_Fail 10   // FAIL and calib blue LED
-  #define pin_USR 11        // User LED
+  #define pin_USR 9         // User LED
 
   #define pin_FD 13    // freq Down
   #define pin_FU 13    // freq Up
   #define pin_AD 13    // Amp Down
   #define pin_AU 13    // Amp Up
 
-  #define sliders 1    // 1 = control with potentiometers  0 = with push buttons
+  #define control_with_pot 1    // 1 = control with potentiometers  0 = with push buttons
 
   #define F 6       // motion control feed forward  
   #define KP 1.6    // motion control propportional gain 
@@ -58,16 +76,6 @@
   #define f_reduction_up_val 0.65    // reduce feedforward by this factor when moving up 
 
 #endif
-
-// clinical 
-#define perc_of_lower_volume 65.0      // % of max press - defines lower volume
-#define perc_of_lower_volume_display 40.0      // % of max press - defines lower volume
-#define wait_time_after_resistance 3  // seconds
-#define max_pres_disconnected 10      // in A2D units /4
-#define insp_pressure_default 45               // hold this pressure while breathing 
-#define safety_pressure 70            // quicly pullnack arm when reaching this
-#define speed_multiplier_reverse 2    // factor of speeed for releasing the pressure (runs motion in reverse at X this speed
-#define smear_factor 0                // 0 to do all cycle in 2.5 seconds and wait for the rest 1 to "smear" the motion profile on the whole cycle time 
 
 // Arduino pins alocation
 #define pin_PWM 3
@@ -88,7 +96,7 @@
 #define cycleTime 5        // milisec
 #define alpha 0.95         // filter for current apatation - higher = stronger low pass filter
 #define profile_length 500 // motion control profile length 
-#define motion_control_allowed_error  40  // % of range
+#define motion_control_allowed_error  30  // % of range
 
 // motor and sensor definitions
 #define invert_mot 1
@@ -101,6 +109,7 @@
 #include <Wire.h>
 #include <SparkFun_MS5803_I2C.h> 
 #include <LiquidCrystal_I2C.h>
+#include "ArduinoUniqueID.h"
 
 Servo motor;
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -121,14 +130,14 @@ byte vel[profile_length]={128,128,129,129,130,130,131,131,131,131,132,132,133,13
 */
 
 byte FD,FU,AD,AU,FDFB,FUFB,ADFB,AUFB,SW3,SW3FB,run_profile,LED_status,USR_status,blueOn,calibrated=0, calibON, numBlinkAmp,numBlinkFreq;
-int A_pot,prevA_pot, A_current, A_amplitude=80, A_freq=751;
-int motorPWM,index=0,i,high_pressure_detected, wait_cycles,cycle_number, cycles_lost,index_last_motion;
+int A_pot,prevA_pot, A_current, A_amplitude=80, A_freq;
+int motorPWM,index=0, prev_index,i, wait_cycles,cycle_number, cycles_lost,index_last_motion;
 unsigned int max_arm_pos=600, min_arm_pos=500;
-float wanted_pos, wanted_vel_PWM, range, profile_planned_vel, planned_vel, integral, error, f_reduction_up ;
+float wanted_pos, wanted_vel_PWM, range, range_factor, profile_planned_vel, planned_vel, integral, error, f_reduction_up ;
 unsigned long lastSent,lastBlink, lastIndex, lastUSRblink,last_SW3_not_pressed,lastBlue,start_wait, last_sent_data, last_read_pres;
-byte monitor_index=0, BPM=14, in_wait, failure, send_beep, wanted_cycle_time, disconnected=0, motion_failure=0, sent_LCD, hold_breath, safety_pressure_detected;
-byte counter_ON,counter_OFF,SW3temp,insp_pressure;
-float pressure_baseline, range_factor;
+byte monitor_index=0, BPM=14, in_wait, failure, send_beep, wanted_cycle_time, disconnected=0,high_pressure_detected=0, motion_failure=0, sent_LCD, hold_breath, safety_pressure_detected;
+byte counter_ON,counter_OFF,SW3temp,insp_pressure, safety_pressure_counter, no_fail_counter,TST;
+float pressure_baseline;
 int pressure_abs,breath_cycle_time, max_pressure=100 , prev_max_pressure=100, min_pressure=999, prev_min_pressure=999, index_to_hold_breath;
 
 void setup() {
@@ -138,6 +147,7 @@ void setup() {
   pinMode (pin_AD,INPUT_PULLUP);
   pinMode (pin_AU,INPUT_PULLUP);
   pinMode (pin_SW3,INPUT_PULLUP);
+  pinMode (pin_TST,INPUT_PULLUP);
   pinMode (pin_LED_AMP,OUTPUT);
   pinMode (pin_LED_FREQ,OUTPUT);
   pinMode (pin_LED_Fail,OUTPUT);
@@ -158,8 +168,9 @@ void setup() {
     lcd.backlight();  // Turn on the blacklight and print a message.
   }
   
+  for (i = 0; i < 10; i++) {UniqueIDdump(Serial);  delay(20); }
+  
   run_profile=0;
-  delay(100);
   EEPROM.get(min_address, min_arm_pos);   delay (100);
   EEPROM.get(max_address, max_arm_pos);  delay (100);
   if (min_arm_pos>=0 && min_arm_pos<1024 && max_arm_pos>=0 && max_arm_pos<1024) calibrated = 1;
@@ -213,7 +224,7 @@ void run_profile_func()
       if (100*abs(error)/(max_arm_pos - min_arm_pos)>motion_control_allowed_error && cycle_number>1) motion_failure=1;
          
       integral += error*float(wanted_cycle_time)/1000;
-      if (integral>integral_limit) integral=integral_limit;
+      if (integral> integral_limit) integral= integral_limit;
       if (integral<-integral_limit) integral=-integral_limit;
       if (index<20 || index ==200) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
 
@@ -223,13 +234,17 @@ void run_profile_func()
       wanted_vel_PWM = wanted_vel_PWM*float(cycleTime)/float(wanted_cycle_time);
  
       if (safety_pressure_detected) {index-=speed_multiplier_reverse*(1+cycles_lost);  }         // run in reverse if high pressure was detected
-      if (index<0) {safety_pressure_detected=0; wait_cycles=200*wait_time_after_resistance; index=profile_length -2;}    // stop the reverse when reching the cycle start point
+      if (index<0) { if(safety_pressure_detected==1) safety_pressure_counter+=1;
+                     safety_pressure_detected=0; wait_cycles=200*wait_time_after_resistance; index=profile_length -2;
+                    }    // stop the reverse when reching the cycle start point
 
       if (in_wait==0) index +=(1+cycles_lost);    // dont advance index while waiting at the end of cycle 
       if (index >= (profile_length-2))            // wait for the next cycle to begin in this point -> 2 points befoe the last cycle index
         {
         if (millis()-start_wait < breath_cycle_time) { index = profile_length-2; in_wait=1;   }    // still need to wait ...
-        else { index =0; cycle_number+=1; start_wait=millis(); in_wait=0; send_beep=1; high_pressure_detected=0;}            // time has come ... start from index = 0 
+        else { index =0; cycle_number+=1; start_wait=millis(); in_wait=0; send_beep=1; 
+                high_pressure_detected=0;
+             }            // time has come ... start from index = 0 
         }
       blink_user_led ();
     }
@@ -270,12 +285,17 @@ void calc_failure()
   if (prev_max_pressure < max_pres_disconnected && cycle_number>2) disconnected=1; else disconnected=0; // tube was disconnected
   if (pressure_abs>insp_pressure && hold_breath==0 && profile_planned_vel>0) { high_pressure_detected=1; hold_breath=1; index_to_hold_breath=index; }   // high pressure detected 
   if (pressure_abs>safety_pressure && profile_planned_vel>0) safety_pressure_detected=1;
-  if (index==0) failure =0;
+  if (pressure_abs>insp_pressure+10 && profile_planned_vel>0) safety_pressure_detected=1;
+  if (index==0 && prev_index!=0 && failure==0 && safety_pressure_detected==0) no_fail_counter+=1;
+  if (index==0)       failure =0;
   if (disconnected)   failure =1;
-  if (safety_pressure_detected) failure =2; 
+  if (safety_pressure_detected && safety_pressure_counter>=1) { failure=2; safety_pressure_counter=1; } 
   if (motion_failure) failure =3;
-  if (disconnected==1 || motion_failure==1 || safety_pressure_detected==1 ) blinkBlue (1); else LED_FAIL(0);
-}
+  if (disconnected==1 || motion_failure==1 || safety_pressure_detected==1) {blinkBlue (1); no_fail_counter=0;}  else {LED_FAIL(0); }
+  if (no_fail_counter>=3) safety_pressure_counter=0;
+  if (no_fail_counter>=100) no_fail_counter=100;
+  prev_index= index;
+}  
 
 void calibrate_range()   // used for calibaration of motion range
 { 
@@ -360,7 +380,7 @@ void set_motor_PWM (float wanted_vel_PWM)
 
 int read_motion_for_calib()
 { int wanted_cal_PWM;
-  if (sliders)
+  if (control_with_pot)
     {
       if (A_freq>750) wanted_cal_PWM=(A_freq-750)/20;
       if (A_freq<250) wanted_cal_PWM=(A_freq-250)/20;
@@ -383,13 +403,14 @@ void read_IO ()
   FU = (1-digitalRead  (pin_FU));
   AD = (1-digitalRead  (pin_AD));
   AU = (1-digitalRead  (pin_AU));
+  TST = (1-digitalRead  (pin_TST));
   SW3temp = (1-digitalRead (pin_SW3));
   if (SW3temp==1) {counter_ON+=1;  if (counter_ON>20)  {SW3=1; counter_ON=100; }} else counter_ON=0;
   if (SW3temp==0) {counter_OFF+=1; if (counter_OFF>20) {SW3=0; counter_OFF=100;}} else counter_OFF=0;
  
   A_pot= analogRead   (pin_POT);   if (invert_pot) A_pot=1023-A_pot;
   A_current= analogRead (pin_CUR)/8;  // in tenth Amps
-  if(sliders)
+  if(control_with_pot)
   {
   A_amplitude= perc_of_lower_volume_display + int(float(analogRead (pin_AMP))*(100-perc_of_lower_volume_display)/1023);
   if (A_amplitude>100) A_amplitude=100;
@@ -400,16 +421,26 @@ void read_IO ()
   }
   else
   {
-    if (FD==0 && FDFB==1) {BPM-=2; if(BPM<6) BPM=6; numBlinkFreq=2; cycle_number=0;} 
-    if (FU==0 && FUFB==1) {BPM+=2; if(BPM>24) BPM=24; numBlinkFreq=2; cycle_number=0;}
-    breath_cycle_time = 60000/BPM;
-    if (AD==0 && ADFB==1) {A_amplitude-=deltaUD; numBlinkAmp=2; if (A_amplitude<perc_of_lower_volume_display) A_amplitude=perc_of_lower_volume_display; }
-    if (AU==0 && AUFB==1) {A_amplitude+=deltaUD; numBlinkAmp=2; if (A_amplitude>100) A_amplitude=100;}
+    if (TST==0) {
+        if (FD==0 && FDFB==1) {BPM-=2; if(BPM<6) BPM=6; numBlinkFreq=2; cycle_number=0;} 
+        if (FU==0 && FUFB==1) {BPM+=2; if(BPM>24) BPM=24; numBlinkFreq=2; cycle_number=0;}
+        breath_cycle_time = 60000/BPM;
+        if (AD==0 && ADFB==1) {A_amplitude-=deltaUD; numBlinkAmp=2; if (A_amplitude<perc_of_lower_volume_display) A_amplitude=perc_of_lower_volume_display; }
+        if (AU==0 && AUFB==1) {A_amplitude+=deltaUD; numBlinkAmp=2; if (A_amplitude>100) A_amplitude=100;}
+        }
+     if (TST==1) {
+        if (FD==0 && FDFB==1) {insp_pressure-=5; if(insp_pressure<30) insp_pressure=30; } 
+        if (FU==0 && FUFB==1) {insp_pressure+=5; if(insp_pressure>70) insp_pressure=70;}
+        if (AD==0 && ADFB==1) {insp_pressure-=5; if(insp_pressure<30) insp_pressure=30; } 
+        if (AU==0 && AUFB==1) {insp_pressure+=5; if(insp_pressure>70) insp_pressure=70;}
+        }
   }
   range_factor = perc_of_lower_volume+(A_amplitude-perc_of_lower_volume_display)*(100-perc_of_lower_volume)/(100-perc_of_lower_volume_display);
   range_factor = range_factor/100;
   if (range_factor>1) range_factor=1;  if (range_factor<0) range_factor=0; 
-  if (pres_pot_available) insp_pressure= 30+analogRead (pin_PRE)/25;
+  if (pres_pot_available) insp_pressure= 10+analogRead (pin_PRE)/12;
+  if (insp_pressure<30) insp_pressure=30;
+  if (insp_pressure>70) insp_pressure=70;
   
    if (pressure_sensor_available)  
    {if (millis()-last_read_pres>100) 
