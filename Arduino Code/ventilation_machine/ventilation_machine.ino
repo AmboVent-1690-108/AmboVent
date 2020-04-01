@@ -11,8 +11,8 @@
 #define pressure_sensor_available 1
 
 // options for display and debug
-#define send_to_monitor 0    // 1 = send data to monitor  0 = dont
-#define telemetry 1          // 1 = send telemtry fro debug
+#define send_to_monitor 1    // 1 = send data to monitor  0 = dont
+#define telemetry 0          // 1 = send telemtry fro debug
 
 // UI
 #define deltaUD 5   // define the value chnage per each button press
@@ -70,7 +70,7 @@
   #define curr_sense 0
   #define control_with_pot 1    // 1 = control with potentiometers  0 = with push buttons
 
- #define F 0.6       // motion control feed forward  
+  #define F 0.6       // motion control feed forward  
   #define KP 0.2      // motion control propportional gain 
   #define KI 2        // motion control integral gain 
  
