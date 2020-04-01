@@ -6,13 +6,13 @@
  */
  
 // system configuration 
-#define full_configuration 0               //  0 if the partial system - potentiometer on pulley, no potentiometers, ...
+#define full_configuration 1               //  0 if the partial system - potentiometer on pulley, no potentiometers, ...
 
 #define pressure_sensor_available 1
 
 // options for display and debug
-#define send_to_monitor 1    // 1 = send data to monitor  0 = dont
-#define telemetry 0          // 1 = send telemtry fro debug
+#define send_to_monitor 0    // 1 = send data to monitor  0 = dont
+#define telemetry 1          // 1 = send telemtry fro debug
 
 // UI
 #define deltaUD 5   // define the value chnage per each button press
@@ -21,8 +21,9 @@
 #define perc_of_lower_volume 65.0      // % of max press - defines lower volume
 #define perc_of_lower_volume_display 40.0      // % of max press - defines lower volume
 #define wait_time_after_resistance 3  // seconds
-#define max_pres_disconnected 10      // in A2D units /4
+#define max_pres_disconnected 10      // if the max pressure during breathing cycle does not reach this value - pipe is disconnected
 #define insp_pressure_default 40      // hold this pressure while breathing 
+#define safety_pres_above_insp 10     // defines safety pressure as the inspirium pressure + this one
 #define safety_pressure 70            // quicly pullnack arm when reaching this
 #define speed_multiplier_reverse 2    // factor of speeed for releasing the pressure (runs motion in reverse at X this speed
 #define smear_factor 0                // 0 to do all cycle in 2.5 seconds and wait for the rest 1 to "smear" the motion profile on the whole cycle time 
@@ -41,7 +42,7 @@
   #define pin_FU 5    // freq Up
   #define pin_AD 8    // Amp Down
   #define pin_AU 6    // Amp Up
-
+  #define curr_sense 1 
   #define control_with_pot 0    // 1 = control with potentiometers  0 = with push buttons
   
   #define F 0.6       // motion control feed forward  
@@ -66,12 +67,16 @@
   #define pin_FU 13    // freq Up
   #define pin_AD 13    // Amp Down
   #define pin_AU 13    // Amp Up
-
+  #define curr_sense 0
   #define control_with_pot 1    // 1 = control with potentiometers  0 = with push buttons
 
-  #define F 6       // motion control feed forward  
-  #define KP 1.6    // motion control propportional gain 
-  #define KI 0      // motion control integral gain 
+ #define F 0.6       // motion control feed forward  
+  #define KP 0.2      // motion control propportional gain 
+  #define KI 2        // motion control integral gain 
+ 
+//  #define F 6       // motion control feed forward  
+//  #define KP 1.6    // motion control propportional gain 
+//  #define KI 0      // motion control integral gain 
   #define integral_limit 6  // limits the integral of error 
   #define f_reduction_up_val 0.65    // reduce feedforward by this factor when moving up 
 
@@ -124,19 +129,14 @@ MS5803 sparkfumPress(ADDRESS_HIGH);
 byte pos[profile_length]={0,0,0,0,1,1,1,2,2,3,3,4,5,5,6,7,8,9,10,11,12,14,15,16,17,19,20,22,23,25,27,28,30,32,33,35,37,39,41,43,45,47,49,51,53,55,57,59,62,64,66,68,71,73,75,78,80,82,85,87,90,92,95,97,100,102,105,107,110,112,115,117,120,122,125,128,130,133,135,138,140,143,145,148,150,153,155,158,160,163,165,168,170,173,175,177,180,182,184,187,189,191,193,196,198,200,202,204,206,208,210,212,214,216,218,220,222,223,225,227,228,230,232,233,235,236,238,239,240,241,243,244,245,246,247,248,249,250,250,251,252,252,253,253,254,254,254,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,254,254,254,253,253,252,252,251,250,250,249,248,248,247,246,245,244,243,242,241,239,238,237,236,234,233,232,230,229,227,225,224,222,220,219,217,215,213,211,209,207,205,203,201,199,197,195,193,191,188,186,184,182,179,177,175,172,170,167,165,163,160,158,155,153,150,148,145,143,140,138,135,133,130,128,125,123,120,118,115,113,110,108,105,103,101,98,96,94,91,89,87,85,83,80,78,76,74,72,70,68,66,65,63,61,59,58,56,54,53,51,50,48,47,46,45,43,42,41,40,39,38,37,36,35,34,33,32,31,31,30,29,28,27,26,26,25,24,23,22,22,21,20,20,19,18,18,17,16,16,15,15,14,14,13,13,12,12,11,11,10,10,9,9,9,8,8,7,7,7,6,6,6,5,5,5,5,4,4,4,4,3,3,3,3,3,3,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 byte vel[profile_length]={129,129,130,130,131,131,132,133,133,134,135,135,136,136,137,138,138,138,139,140,140,141,141,141,142,142,143,143,144,144,145,145,145,146,146,146,147,147,147,148,148,148,149,149,149,150,150,150,150,151,151,151,151,151,152,152,152,152,152,152,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,152,152,152,152,152,152,151,151,151,151,151,150,150,150,150,149,149,149,148,148,148,147,147,147,146,146,146,145,145,145,144,144,143,143,142,142,141,141,141,140,140,139,138,138,138,137,136,136,135,135,134,133,133,132,131,131,130,130,129,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,127,126,126,126,125,125,124,124,123,123,122,122,121,121,120,120,120,119,118,118,118,117,117,116,116,115,115,115,114,114,113,113,113,112,112,111,111,111,110,110,109,109,109,108,108,108,107,107,107,107,106,106,106,105,105,105,105,105,104,104,104,104,104,104,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,104,104,104,104,104,105,105,105,105,105,106,106,106,107,107,107,108,108,108,109,109,109,110,110,111,111,112,112,113,113,114,114,114,115,116,116,116,117,117,118,118,118,118,118,119,119,119,119,119,119,119,120,120,120,120,120,120,120,121,121,121,121,121,121,121,122,122,122,122,122,122,122,123,123,123,123,123,123,123,124,124,124,124,124,124,124,124,124,125,125,125,125,125,125,125,125,125,126,126,126,126,126,126,126,126,126,126,126,126,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128};
 
-/* until March 27
-byte pos[profile_length]={0,0,0,0,0,0,1,1,1,2,2,2,3,3,4,4,5,5,6,6,7,8,9,9,10,11,12,13,14,15,15,16,17,19,20,21,22,23,24,25,27,28,29,30,32,33,34,36,37,38,40,41,43,44,46,47,49,50,52,53,55,57,58,60,62,63,65,67,68,70,72,74,75,77,79,81,82,84,86,88,90,92,93,95,97,99,101,103,105,107,108,110,112,114,116,118,120,122,124,126,128,129,131,133,135,137,139,141,143,145,147,148,150,152,154,156,158,160,162,163,165,167,169,171,173,174,176,178,180,181,183,185,187,188,190,192,193,195,197,198,200,202,203,205,206,208,209,211,212,214,215,217,218,219,221,222,223,225,226,227,228,230,231,232,233,234,235,236,238,239,240,240,241,242,243,244,245,246,246,247,248,249,249,250,250,251,251,252,252,253,253,253,254,254,254,255,255,255,255,255,255,255,255,255,255,255,255,254,254,254,254,253,253,253,252,252,251,251,250,250,249,248,248,247,246,246,245,244,243,242,241,240,239,238,236,235,234,233,231,230,228,227,225,224,222,220,218,216,215,213,211,209,206,204,202,200,197,195,193,190,188,185,182,180,177,174,171,168,166,163,160,157,154,151,148,145,142,139,136,133,130,127,124,121,118,115,112,109,107,104,101,99,96,93,91,88,86,84,81,79,77,75,73,71,69,67,65,63,61,60,58,57,55,54,52,51,50,48,47,46,45,44,43,42,41,40,39,38,38,37,36,35,34,34,33,32,31,31,30,29,29,28,27,27,26,26,25,24,24,23,23,22,22,21,21,20,20,19,19,18,18,17,17,16,16,15,15,15,14,14,13,13,13,12,12,12,11,11,11,10,10,10,9,9,9,9,8,8,8,8,7,7,7,7,6,6,6,6,6,5,5,5,5,5,4,4,4,4,4,4,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-byte vel[profile_length]={128,128,129,129,130,130,131,131,131,131,132,132,133,133,133,133,134,134,135,135,135,135,136,136,136,136,137,137,137,137,138,138,139,139,139,139,140,140,140,140,140,140,141,141,141,141,142,142,142,142,143,143,143,143,143,143,144,144,144,144,144,144,145,145,145,145,145,145,145,145,146,146,146,146,146,146,146,146,146,146,146,146,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,147,146,146,146,146,146,146,146,146,146,146,146,146,145,145,145,145,145,145,145,145,144,144,144,144,144,144,143,143,143,143,143,143,142,142,142,142,141,141,141,141,140,140,140,140,140,140,139,139,139,139,138,138,137,137,137,137,136,136,136,136,135,135,135,135,134,134,133,133,133,133,132,132,131,131,131,131,130,130,129,129,128,128,128,128,127,127,127,127,126,126,126,125,125,125,124,124,124,123,123,123,122,122,121,121,121,120,120,120,119,119,118,118,118,117,117,116,116,115,115,114,114,113,113,112,112,111,111,110,110,109,108,108,107,107,106,106,105,105,104,104,103,103,102,102,101,101,100,100,100,99,99,99,99,98,98,98,98,98,98,98,98,98,98,98,99,99,99,99,100,100,101,101,101,102,102,103,103,104,104,105,106,106,107,107,108,108,109,110,110,111,111,112,112,113,113,114,114,115,115,116,116,117,117,118,118,119,119,120,120,120,120,120,120,120,120,121,121,121,121,121,121,121,121,122,122,122,122,122,122,122,122,122,123,123,123,123,123,123,123,123,123,123,123,124,124,124,124,124,124,124,124,124,124,124,124,124,125,125,125,125,125,125,125,125,125,125,125,125,125,125,125,126,126,126,126,126,126,126,126,126,126,126,126,126,126,126,126,126,126,126,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128};
-*/
-
-byte FD,FU,AD,AU,FDFB,FUFB,ADFB,AUFB,SW3,SW3FB,run_profile,LED_status,USR_status,blueOn,calibrated=0, calibON, numBlinkAmp,numBlinkFreq;
-int A_pot,prevA_pot, A_current, A_amplitude=80, A_freq;
+byte FD,FU,AD,AU,FDFB,FUFB,ADFB,AUFB,SW3,SW3FB,TSTFB,run_profile,LED_status,USR_status,blueOn,calibrated=0, calibON, numBlinkAmp,numBlinkFreq;
+int A_pot,prevA_pot, A_current, A_amplitude=80, prev_A_amplitude, A_freq;
 int motorPWM,index=0, prev_index,i, wait_cycles,cycle_number, cycles_lost,index_last_motion;
 unsigned int max_arm_pos=600, min_arm_pos=500;
 float wanted_pos, wanted_vel_PWM, range, range_factor, profile_planned_vel, planned_vel, integral, error, f_reduction_up ;
-unsigned long lastSent,lastBlink, lastIndex, lastUSRblink,last_SW3_not_pressed,lastBlue,start_wait, last_sent_data, last_read_pres;
-byte monitor_index=0, BPM=14, in_wait, failure, send_beep, wanted_cycle_time, disconnected=0,high_pressure_detected=0, motion_failure=0, sent_LCD, hold_breath, safety_pressure_detected;
-byte counter_ON,counter_OFF,SW3temp,insp_pressure, safety_pressure_counter, no_fail_counter,TST;
+unsigned long lastSent,lastBlink, lastIndex, lastUSRblink,last_TST_not_pressed,lastBlue,start_wait, last_sent_data, last_read_pres,start_disp_pres;
+byte monitor_index=0, BPM=14,prev_BPM, in_wait, failure, send_beep, wanted_cycle_time, disconnected=0,high_pressure_detected=0, motion_failure=0, sent_LCD, hold_breath, safety_pressure_detected;
+byte counter_ON,counter_OFF,SW3temp,insp_pressure,prev_insp_pressure, safety_pressure_counter, no_fail_counter,TST, counter_TST_OFF,counter_TST_ON,TSTtemp;
 float pressure_baseline;
 int pressure_abs,breath_cycle_time, max_pressure=100 , prev_max_pressure=100, min_pressure=999, prev_min_pressure=999, index_to_hold_breath;
 
@@ -168,7 +168,7 @@ void setup() {
     lcd.backlight();  // Turn on the blacklight and print a message.
   }
   
-  for (i = 0; i < 10; i++) {UniqueIDdump(Serial);  delay(20); }
+  for (i = 0; i < 2; i++) {UniqueIDdump(Serial);  delay(100); }
   
   run_profile=0;
   EEPROM.get(min_address, min_arm_pos);   delay (100);
@@ -194,8 +194,8 @@ void loop()
       last_sent_data=millis();
   }
 
-  if (SW3==0) last_SW3_not_pressed=millis();
-  if (millis()-last_SW3_not_pressed>3000) calibrate_range();
+  if (TST==0) last_TST_not_pressed=millis();
+  if (millis()-last_TST_not_pressed>5000) calibrate_range();
   if (calibrated ==0) { run_profile=0;  calibrate_range(); }
 }
 
@@ -285,7 +285,7 @@ void calc_failure()
   if (prev_max_pressure < max_pres_disconnected && cycle_number>2) disconnected=1; else disconnected=0; // tube was disconnected
   if (pressure_abs>insp_pressure && hold_breath==0 && profile_planned_vel>0) { high_pressure_detected=1; hold_breath=1; index_to_hold_breath=index; }   // high pressure detected 
   if (pressure_abs>safety_pressure && profile_planned_vel>0) safety_pressure_detected=1;
-  if (pressure_abs>insp_pressure+10 && profile_planned_vel>0) safety_pressure_detected=1;
+  if (pressure_abs>insp_pressure+safety_pres_above_insp && profile_planned_vel>0) safety_pressure_detected=1;
   if (index==0 && prev_index!=0 && failure==0 && safety_pressure_detected==0) no_fail_counter+=1;
   if (index==0)       failure =0;
   if (disconnected)   failure =1;
@@ -300,32 +300,35 @@ void calc_failure()
 void calibrate_range()   // used for calibaration of motion range
 { 
   byte progress;
-  while (SW3==1) {read_IO ();     blinkBlue (2); }
-  progress=0; SW3FB=0; delay(30);
-  calibON = 1;
+  LED_USR(1);
+  while (TST==1) {read_IO ();     blinkBlue (2); }
+  progress=0; TSTFB=0; delay(30);
+  calibON = 1;  lcd.clear(); lcd.setCursor(0, 0); lcd.print("Move to upper");  lcd.setCursor(0, 1); lcd.print("Press Test");
   while (progress==0)  // step 1 - calibrate top position
   {
     blinkBlue (2); read_IO (); delay(5);
-    if (SW3 ==0 && SW3FB==1) progress=1;
+    if (TST ==0 && TSTFB==1) progress=1;
     set_motor_PWM (0);
     if (millis()-last_sent_data>7)    {if (telemetry) print_tele();  last_sent_data=millis();  }
   }
-  SW3FB=0;  delay(30);
+    LED_USR(0);
+  TSTFB=0;  delay(30);
   read_IO (); min_arm_pos=A_pot;
-  progress=0;
+  progress=0; lcd.clear(); lcd.setCursor(0, 0); lcd.print("Move to lower");   
+  lcd.setCursor(0, 1); lcd.print("Press Test");
   while (progress==0)  // step 2 - calibrate bottom position
   {
     blinkBlue (4);  read_IO (); delay(5);
-    if (SW3 ==0 && SW3FB==1) progress=1;
+    if (TST ==0 && TSTFB==1) progress=1;
     set_motor_PWM (0);
     if (millis()-last_sent_data>7)    {if (telemetry) print_tele();  last_sent_data=millis();  }
   }
-  SW3FB=0;  delay(30);   progress=0;
-  read_IO ();   max_arm_pos=A_pot;
+  TSTFB=0;  delay(30);   progress=0;   LED_USR(1);
+  read_IO ();   max_arm_pos=A_pot; lcd.clear(); lcd.setCursor(0, 0); lcd.print("Move to SAFE");   lcd.setCursor(0, 1); lcd.print("Press Test");
   while (progress==0)   // step 3 - manual control for positioning back in safe location 
   {
     blinkBlue (8);  read_IO (); delay(5);
-    if (SW3 ==0 && SW3FB==1) progress=1;
+    if (TST ==0 && TSTFB==1) progress=1;
     set_motor_PWM (0);
     if (millis()-last_sent_data>7)    {if (telemetry) print_tele();  last_sent_data=millis();  }
   }
@@ -333,14 +336,14 @@ void calibrate_range()   // used for calibaration of motion range
   EEPROM.put(min_address, min_arm_pos);  delay(200);
   EEPROM.put(max_address, max_arm_pos);  delay(200);
   SW3FB=0;
-  last_SW3_not_pressed=millis();
+  last_TST_not_pressed=millis();
   run_profile=0;
   calibrated=1;
-  calibON = 0;
+  calibON = 0; display_LCD();
 }
 
 void display_LCD()   // here function that sends data to LCD
-{
+{ if (calibON==0) {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("BPM:");
@@ -349,10 +352,9 @@ void display_LCD()   // here function that sends data to LCD
   lcd.print(byte(A_amplitude));
   lcd.print("%");
   lcd.setCursor(0, 1); 
-  lcd.print("Pmin:");
-  lcd.print(byte(prev_min_pressure));
-  lcd.print("  Pmax:");
-  lcd.print(byte(prev_max_pressure));
+  if (millis()- start_disp_pres<3000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
+  else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
+}   
 }
 
 void reset_failures()
@@ -368,7 +370,7 @@ void set_motor_PWM (float wanted_vel_PWM)
   
   if (calibON==1 ) wanted_vel_PWM=read_motion_for_calib();  // allows manual motion during calibration
   if (invert_mot) wanted_vel_PWM=-wanted_vel_PWM;
-  if (A_current>max_allowed_current)   wanted_vel_PWM=0;
+  if (curr_sense) {if (A_current>max_allowed_current)   wanted_vel_PWM=0;}
   if (motion_failure==1 && calibON==0) wanted_vel_PWM=0;
   if (wanted_vel_PWM > 0) wanted_vel_PWM+=3;   // undo controller dead band
   if (wanted_vel_PWM < 0) wanted_vel_PWM-=3;   // undo controller dead band
@@ -382,9 +384,10 @@ int read_motion_for_calib()
 { int wanted_cal_PWM;
   if (control_with_pot)
     {
-      if (A_freq>750) wanted_cal_PWM=(A_freq-750)/20;
-      if (A_freq<250) wanted_cal_PWM=(A_freq-250)/20;
+      if (A_freq>750) wanted_cal_PWM=(A_freq-750)/15;
+      if (A_freq<250) wanted_cal_PWM=(A_freq-250)/15;
       if (A_freq>=250 && A_freq<=750) wanted_cal_PWM=0;
+ //     Serial.println(wanted_cal_PWM);
     }
     else
     { wanted_cal_PWM=0;
@@ -397,16 +400,20 @@ int read_motion_for_calib()
 }
 
 void read_IO ()
-{ FDFB=FD; FUFB=FU; ADFB=AD;  AUFB=AU;   SW3FB=SW3; 
+{ FDFB=FD; FUFB=FU; ADFB=AD;  AUFB=AU;   SW3FB=SW3; TSTFB=TST;
+  prev_A_amplitude=A_amplitude;
+  prev_BPM=BPM;
   prevA_pot=A_pot;
   FD = (1-digitalRead  (pin_FD)); 
   FU = (1-digitalRead  (pin_FU));
   AD = (1-digitalRead  (pin_AD));
   AU = (1-digitalRead  (pin_AU));
-  TST = (1-digitalRead  (pin_TST));
+  TSTtemp = (1-digitalRead  (pin_TST));
   SW3temp = (1-digitalRead (pin_SW3));
   if (SW3temp==1) {counter_ON+=1;  if (counter_ON>20)  {SW3=1; counter_ON=100; }} else counter_ON=0;
   if (SW3temp==0) {counter_OFF+=1; if (counter_OFF>20) {SW3=0; counter_OFF=100;}} else counter_OFF=0;
+  if (TSTtemp==1) {counter_TST_ON+=1;  if (counter_TST_ON>20)  {TST=1; counter_TST_ON=100; }} else counter_TST_ON=0;
+  if (TSTtemp==0) {counter_TST_OFF+=1; if (counter_TST_OFF>20) {TST=0; counter_TST_OFF=100;}} else counter_TST_OFF=0;
  
   A_pot= analogRead   (pin_POT);   if (invert_pot) A_pot=1023-A_pot;
   A_current= analogRead (pin_CUR)/8;  // in tenth Amps
@@ -438,18 +445,21 @@ void read_IO ()
   range_factor = perc_of_lower_volume+(A_amplitude-perc_of_lower_volume_display)*(100-perc_of_lower_volume)/(100-perc_of_lower_volume_display);
   range_factor = range_factor/100;
   if (range_factor>1) range_factor=1;  if (range_factor<0) range_factor=0; 
+ 
   if (pres_pot_available) insp_pressure= 10+analogRead (pin_PRE)/12;
   if (insp_pressure<30) insp_pressure=30;
   if (insp_pressure>70) insp_pressure=70;
-  
-   if (pressure_sensor_available)  
+  if (abs(insp_pressure-prev_insp_pressure)>1) { prev_insp_pressure=insp_pressure; start_disp_pres=millis(); display_LCD(); }
+
+  if (pressure_sensor_available)  
    {if (millis()-last_read_pres>100) 
      {
       last_read_pres = millis();  
       pressure_abs = int( sparkfumPress.getPressure(ADC_4096)-pressure_baseline);   // mbar
       if (pressure_abs<0) pressure_abs=0;
      }
-   } 
+   }
+  if (prev_BPM != BPM || prev_A_amplitude !=A_amplitude)  display_LCD();
   if (SW3==0 && SW3FB==1)  // start /  stop breathing motion   
       {
         run_profile=1-run_profile; 
@@ -506,8 +516,8 @@ void print_tele ()  // UNCOMMENT THE TELEMETRY NEEDED
 //  Serial.print(" min,max:");  Serial.print(min_arm_pos); Serial.print(","); Serial.print(max_arm_pos);  
 //  Serial.print(" WPWM :");  Serial.print(motorPWM); 
 //  Serial.print(" integral:");  Serial.print(int(integral));  
-//  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
-//  Serial.print(" Ac:");  Serial.print(A_pot); 
+  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
+  Serial.print(" Ac:");  Serial.print(A_pot); 
 //  Serial.print(" cur:");  Serial.print(A_current); 
 //  Serial.print(" amp:");  Serial.print(A_amplitude); 
 //  Serial.print(" freq:");  Serial.print(A_freq); 
