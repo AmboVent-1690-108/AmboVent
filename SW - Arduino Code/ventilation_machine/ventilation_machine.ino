@@ -31,8 +31,8 @@
 
 
 // clinical 
-#define perc_of_lower_volume 65.0      // % of max press - defines lower volume
-#define perc_of_lower_volume_display 40.0      // % of max press - defines lower volume
+#define perc_of_lower_volume 50.0      // % of max press - defines lower volume
+#define perc_of_lower_volume_display 33.0      // % of max press - defines lower volume
 #define wait_time_after_resistance 3  // seconds
 #define max_pres_disconnected 10      // if the max pressure during breathing cycle does not reach this value - pipe is disconnected
 #define insp_pressure_default 40      // hold this pressure while breathing 
