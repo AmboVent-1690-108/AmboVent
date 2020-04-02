@@ -4,6 +4,18 @@
  *  IT IS NOT APPROVED BY ANY REGULAOTRY AUTHORITY
  *  USE ONLY AT YOUR OWN RISK 
  */
+
+/* 
+ *  potentiometers calibration method:
+ *  1) place the rate pot at most left or right positions
+ *  2) press Test for 5 seconds
+ *  3) follow instructions on screen
+ *  
+ *  Arm position calibration method:
+ *  1) place the rate pot near its center
+ *  2) press Test for 5 seconds
+ *  3) follow instructions on screen (use the Rate pos to move motor)
+ */
  
 // system configuration 
 #define full_configuration 1               //  0 if the partial system - potentiometer on pulley, no potentiometers, ...
@@ -11,11 +23,12 @@
 #define pressure_sensor_available 1
 
 // options for display and debug
-#define send_to_monitor 1    // 1 = send data to monitor  0 = dont
-#define telemetry 0          // 1 = send telemtry fro debug
+#define send_to_monitor 0    // 1 = send data to monitor  0 = dont
+#define telemetry 1          // 1 = send telemtry fro debug
 
 // UI
 #define deltaUD 5   // define the value chnage per each button press
+
 
 // clinical 
 #define perc_of_lower_volume 65.0      // % of max press - defines lower volume
@@ -70,15 +83,11 @@
   #define curr_sense 0
   #define control_with_pot 1    // 1 = control with potentiometers  0 = with push buttons
 
-  #define F 0.6       // motion control feed forward  
-  #define KP 0.2      // motion control propportional gain 
-  #define KI 2        // motion control integral gain 
- 
-//  #define F 6       // motion control feed forward  
-//  #define KP 1.6    // motion control propportional gain 
-//  #define KI 0      // motion control integral gain 
-  #define integral_limit 6  // limits the integral of error 
-  #define f_reduction_up_val 0.65    // reduce feedforward by this factor when moving up 
+  #define F 5       // motion control feed forward  
+  #define KP 2    // motion control propportional gain 
+  #define KI 0      // motion control integral gain 
+  #define integral_limit 5  // limits the integral of error 
+  #define f_reduction_up_val 0.85    // reduce feedforward by this factor when moving up 
 
 #endif
 
@@ -106,8 +115,6 @@
 // motor and sensor definitions
 #define invert_mot 1
 #define invert_pot 0
-#define min_address 4
-#define max_address 8
 
 #include <EEPROM.h>
 #include <Servo.h> 
@@ -129,7 +136,7 @@ byte pos[profile_length]={0,0,0,0,1,1,1,2,2,3,3,4,5,5,6,7,8,9,10,11,12,14,15,16,
 byte vel[profile_length]={129,129,130,130,131,131,132,133,133,134,135,135,136,136,137,138,138,138,139,140,140,141,141,141,142,142,143,143,144,144,145,145,145,146,146,146,147,147,147,148,148,148,149,149,149,150,150,150,150,151,151,151,151,151,152,152,152,152,152,152,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,152,152,152,152,152,152,151,151,151,151,151,150,150,150,150,149,149,149,148,148,148,147,147,147,146,146,146,145,145,145,144,144,143,143,142,142,141,141,141,140,140,139,138,138,138,137,136,136,135,135,134,133,133,132,131,131,130,130,129,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,127,126,126,126,125,125,124,124,123,123,122,122,121,121,120,120,120,119,118,118,118,117,117,116,116,115,115,115,114,114,113,113,113,112,112,111,111,111,110,110,109,109,109,108,108,108,107,107,107,107,106,106,106,105,105,105,105,105,104,104,104,104,104,104,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,104,104,104,104,104,105,105,105,105,105,106,106,106,107,107,107,108,108,108,109,109,109,110,110,111,111,112,112,113,113,114,114,114,115,116,116,116,117,117,118,118,118,118,118,119,119,119,119,119,119,119,120,120,120,120,120,120,120,121,121,121,121,121,121,121,122,122,122,122,122,122,122,123,123,123,123,123,123,123,124,124,124,124,124,124,124,124,124,125,125,125,125,125,125,125,125,125,126,126,126,126,126,126,126,126,126,126,126,126,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128};
 
 byte FD,FU,AD,AU,FDFB,FUFB,ADFB,AUFB,SW3,SW3FB,TSTFB,run_profile,LED_status,USR_status,blueOn,calibrated=0, calibON, numBlinkAmp,numBlinkFreq;
-int A_pot,prevA_pot, A_current, A_amplitude=80, prev_A_amplitude, A_freq;
+int A_pot,prevA_pot, A_current, Compression_perc=80, prev_Compression_perc, A_rate, A_comp, A_pres,pot_rate;
 int motorPWM,index=0, prev_index,i, wait_cycles,cycle_number, cycles_lost,index_last_motion;
 unsigned int max_arm_pos=600, min_arm_pos=500;
 float wanted_pos, wanted_vel_PWM, range, range_factor, profile_planned_vel, planned_vel, integral, error, f_reduction_up ;
@@ -138,6 +145,7 @@ byte monitor_index=0, BPM=14,prev_BPM, in_wait, failure, send_beep, wanted_cycle
 byte counter_ON,counter_OFF,SW3temp,insp_pressure,prev_insp_pressure, safety_pressure_counter, no_fail_counter,TST, counter_TST_OFF,counter_TST_ON,TSTtemp;
 float pressure_baseline;
 int pressure_abs,breath_cycle_time, max_pressure=100 , prev_max_pressure=100, min_pressure=999, prev_min_pressure=999, index_to_hold_breath;
+int comp_pot_low=0,comp_pot_high=1023,rate_pot_low=0,rate_pot_high=1023,pres_pot_low=0,pres_pot_high=1023;
 
 void setup() {
   pinMode (pin_PWM,OUTPUT);
@@ -167,11 +175,17 @@ void setup() {
     lcd.backlight();  // Turn on the blacklight and print a message.
   }
   
-  for (i = 0; i < 2; i++) {UniqueIDdump(Serial);  delay(100); }  // for IAI monitor run for 100 cycles
+//  for (i = 0; i < 2; i++) {UniqueIDdump(Serial);  delay(100); }  // for IAI monitor run for 100 cycles
   
   run_profile=0;
-  EEPROM.get(min_address, min_arm_pos);   delay (100);
-  EEPROM.get(max_address, max_arm_pos);  delay (100);
+  EEPROM.get(4, min_arm_pos);     delay(20);
+  EEPROM.get(8, max_arm_pos);     delay(20);
+  EEPROM.get(12, comp_pot_low);   delay(20);
+  EEPROM.get(16, comp_pot_high);  delay(20);
+  EEPROM.get(20, rate_pot_low);   delay(20);
+  EEPROM.get(24, rate_pot_high);  delay(20);
+  EEPROM.get(28, pres_pot_low);   delay(20);
+  EEPROM.get(32, pres_pot_high);  delay(20);
   if (min_arm_pos>=0 && min_arm_pos<1024 && max_arm_pos>=0 && max_arm_pos<1024) calibrated = 1;
   insp_pressure=insp_pressure_default;
 }
@@ -192,8 +206,10 @@ void loop()
   }
 
   if (TST==0) last_TST_not_pressed=millis();
-  if (millis()-last_TST_not_pressed>5000) calibrate_range();
-  if (calibrated ==0) { run_profile=0;  calibrate_range(); }
+  if (millis()-last_TST_not_pressed>5000) 
+      if (pot_rate > 200 && pot_rate < 800) calibrate_arm_range();
+      else calibrate_pot_range();
+  if (calibrated ==0) { run_profile=0;  calibrate_arm_range(); }
 }
 
 void run_profile_func()
@@ -227,7 +243,7 @@ void run_profile_func()
       integral += error*float(wanted_cycle_time)/1000;
       if (integral> integral_limit) integral= integral_limit;
       if (integral<-integral_limit) integral=-integral_limit;
-      if (index<20 || index ==200) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
+      if (index<2 || index ==220 ) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
 
       if (planned_vel<0) f_reduction_up = f_reduction_up_val; else f_reduction_up=1;  // reduce f for the movement up
   
@@ -276,6 +292,14 @@ int limit_int (int val,int low, int high)
   if (val>high) lim_val=high;
   return (lim_val);
  }
+
+int range_pot (int val,int low, int high)
+ {
+  int new_val;
+  new_val=int( long (val-low)* long(1023)/(high-low));
+  new_val=limit_int(new_val,0,1023);
+  return (new_val);
+ }
  
 void find_min_max_pressure()
 {
@@ -303,7 +327,7 @@ void calc_failure()
   if (pressure_abs>insp_pressure+safety_pres_above_insp && profile_planned_vel>0) safety_pressure_detected=1;
   if (index==0 && prev_index!=0 && failure==0 && safety_pressure_detected==0) no_fail_counter+=1;
   if (index==0)       failure =0;
-  if (disconnected)   failure =1;
+  if (disconnected)   failure =1;   
   if (safety_pressure_detected && safety_pressure_counter>=1) { failure=2; safety_pressure_counter=1; } 
   if (motion_failure) failure =3;
   if (disconnected==1 || motion_failure==1 || safety_pressure_detected==1) {blinkBlue (1); no_fail_counter=0;}  else {LED_FAIL(0); }
@@ -319,7 +343,7 @@ void display_text_calib (char *message)
   lcd.setCursor(0, 1); lcd.print("Then press Test");
 }
 
-void calibrate_range()   // used for calibaration of motion range
+void calibrate_arm_range()   // used for calibaration of motion range
 { 
   byte progress;
   LED_USR(1);   calibON = 1; 
@@ -351,8 +375,8 @@ void calibrate_range()   // used for calibaration of motion range
     set_motor_PWM (0);
   }
 
-  EEPROM.put(min_address, min_arm_pos);  delay(200);
-  EEPROM.put(max_address, max_arm_pos);  delay(200);
+  EEPROM.put(4, min_arm_pos);  delay(200);
+  EEPROM.put(8, max_arm_pos);  delay(200);
   SW3FB=0;
   last_TST_not_pressed=millis();
   run_profile=0;
@@ -360,15 +384,59 @@ void calibrate_range()   // used for calibaration of motion range
   calibON = 0; display_LCD();
 }
 
+void calibrate_pot_range()   // used for calibaration of potentiometers
+{ 
+  byte progress;
+  LED_USR(1);   calibON = 2; 
+  while (TST==1) {read_IO ();     blinkBlue (2); }
+  progress=0; TSTFB=0; delay(30);
+  display_text_calib ("Pot to left pos");
+  while (progress==0)  // step 1 - calibrate top position
+  {
+    blinkBlue (2); read_IO (); delay(5);
+    if (TST ==0 && TSTFB==1) progress=1;
+  }
+  TSTFB=0;  delay(30);  progress=0;  LED_USR(0);
+  comp_pot_low=analogRead (pin_AMP);  rate_pot_low=analogRead (pin_FRQ);  pres_pot_low=analogRead (pin_PRE);
+    
+  display_text_calib ("Pot to right pos");
+  while (progress==0)  // step 2 - calibrate bottom position
+  {
+    blinkBlue (4);  read_IO (); delay(5);
+    if (TST ==0 && TSTFB==1) progress=1;
+  }
+  TSTFB=0;  delay(30);   progress=0;   LED_USR(1);
+  comp_pot_high=analogRead (pin_AMP);  rate_pot_high=analogRead (pin_FRQ);  pres_pot_high=analogRead (pin_PRE);
+
+  EEPROM.put(12, comp_pot_low);   delay(100);
+  EEPROM.put(16, comp_pot_high);  delay(100);
+  EEPROM.put(20, rate_pot_low);   delay(100);
+  EEPROM.put(24, rate_pot_high);  delay(100);
+  EEPROM.put(28, pres_pot_low);   delay(100);
+  EEPROM.put(32, pres_pot_high);  delay(100);
+  SW3FB=0;
+  last_TST_not_pressed=millis();
+  run_profile=0;
+  calibrated=1;
+  calibON = 0; display_LCD();
+}
 void display_LCD()   // here function that sends data to LCD
 { 
-  if (calibON==0) {
+  if (calibON==0) 
+  {
   lcd.clear();
   lcd.setCursor(0, 0);   lcd.print("BPM:");   lcd.print(byte(BPM));  
-  lcd.print("  Dep:"); lcd.print(byte(A_amplitude));  lcd.print("%");
+  lcd.print("  Dep:"); lcd.print(byte(Compression_perc));  lcd.print("%");
   lcd.setCursor(0, 1);  
-  if (millis()- start_disp_pres<3000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
-  else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
+  if (failure ==0)
+    {
+
+      if (millis()- start_disp_pres<3000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
+      else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
+    }
+   if (failure ==1) lcd.print("Pipe Disconnect");
+   if (failure ==2) lcd.print("High Pressure");
+   if (failure ==3) lcd.print("Motion Fail");
   }   
 }
 
@@ -398,10 +466,10 @@ void set_motor_PWM (float wanted_vel_PWM)
 int read_motion_for_calib()
 { int wanted_cal_PWM;
   if (control_with_pot)
-    {
-      if (A_freq>750) wanted_cal_PWM=(A_freq-750)/15;
-      if (A_freq<250) wanted_cal_PWM=(A_freq-250)/15;
-      if (A_freq>=250 && A_freq<=750) wanted_cal_PWM=0;
+    { 
+      if (pot_rate>750) wanted_cal_PWM=(pot_rate-750)/15;
+      if (pot_rate<250) wanted_cal_PWM=(pot_rate-250)/15;
+      if (pot_rate>=250 && pot_rate<=750) wanted_cal_PWM=0;
  //     Serial.println(wanted_cal_PWM);
     }
     else
@@ -416,7 +484,7 @@ int read_motion_for_calib()
 
 void read_IO ()
 { FDFB=FD; FUFB=FU; ADFB=AD;  AUFB=AU;   SW3FB=SW3; TSTFB=TST;
-  prev_A_amplitude=A_amplitude;
+  prev_Compression_perc=Compression_perc;
   prev_BPM=BPM;
   prevA_pot=A_pot;
   FD = (1-digitalRead  (pin_FD)); 
@@ -433,12 +501,21 @@ void read_IO ()
   A_pot= analogRead   (pin_POT);   if (invert_pot) A_pot=1023-A_pot;
   A_current= analogRead (pin_CUR)/8;  // in tenth Amps
   if(control_with_pot)
-  {
-  A_amplitude= perc_of_lower_volume_display + int(float(analogRead (pin_AMP))*(100-perc_of_lower_volume_display)/1023);
-  A_amplitude=limit_int(A_amplitude,perc_of_lower_volume_display,100);
-  A_freq= analogRead (pin_FRQ);
-  BPM = 6+(A_freq-23)/55;
+  { 
+    pot_rate = analogRead (pin_FRQ);
+    A_comp = range_pot(analogRead (pin_AMP),comp_pot_low,comp_pot_high);
+    A_rate = range_pot(pot_rate,rate_pot_low,rate_pot_high);
+    A_pres = range_pot(analogRead (pin_PRE),pres_pot_low,pres_pot_high);
+ 
+  Compression_perc= perc_of_lower_volume_display + int(float(A_comp)*(100-perc_of_lower_volume_display)/1023);
+  Compression_perc=limit_int(Compression_perc,perc_of_lower_volume_display,100);
+
+  BPM = 6+(A_rate-23)/55;
   breath_cycle_time = 60000/BPM;
+
+  insp_pressure= 30+A_pres/25;
+  insp_pressure=limit_int(insp_pressure,30,70);
+  if (abs(insp_pressure-prev_insp_pressure)>1) { prev_insp_pressure=insp_pressure; start_disp_pres=millis(); display_LCD(); }
   }
   else
   {
@@ -446,8 +523,8 @@ void read_IO ()
         if (FD==0 && FDFB==1) {BPM-=2; if(BPM<6) BPM=6; numBlinkFreq=2; cycle_number=0;} 
         if (FU==0 && FUFB==1) {BPM+=2; if(BPM>24) BPM=24; numBlinkFreq=2; cycle_number=0;}
         breath_cycle_time = 60000/BPM;
-        if (AD==0 && ADFB==1) {A_amplitude-=deltaUD; numBlinkAmp=2; if (A_amplitude<perc_of_lower_volume_display) A_amplitude=perc_of_lower_volume_display; }
-        if (AU==0 && AUFB==1) {A_amplitude+=deltaUD; numBlinkAmp=2; if (A_amplitude>100) A_amplitude=100;}
+        if (AD==0 && ADFB==1) {Compression_perc-=deltaUD; numBlinkAmp=2; if (Compression_perc<perc_of_lower_volume_display) Compression_perc=perc_of_lower_volume_display; }
+        if (AU==0 && AUFB==1) {Compression_perc+=deltaUD; numBlinkAmp=2; if (Compression_perc>100) Compression_perc=100;}
         }
      if (TST==1) {
         if (FD==0 && FDFB==1) {insp_pressure-=5; if(insp_pressure<30) insp_pressure=30; } 
@@ -456,13 +533,9 @@ void read_IO ()
         if (AU==0 && AUFB==1) {insp_pressure+=5; if(insp_pressure>70) insp_pressure=70;}
         }
   }
-  range_factor = perc_of_lower_volume+(A_amplitude-perc_of_lower_volume_display)*(100-perc_of_lower_volume)/(100-perc_of_lower_volume_display);
+  range_factor = perc_of_lower_volume+(Compression_perc-perc_of_lower_volume_display)*(100-perc_of_lower_volume)/(100-perc_of_lower_volume_display);
   range_factor = range_factor/100;
   if (range_factor>1) range_factor=1;  if (range_factor<0) range_factor=0; 
- 
-  if (pres_pot_available) insp_pressure= 10+analogRead (pin_PRE)/12;
-  insp_pressure=limit_int(insp_pressure,30,70);
-  if (abs(insp_pressure-prev_insp_pressure)>1) { prev_insp_pressure=insp_pressure; start_disp_pres=millis(); display_LCD(); }
 
   if (pressure_sensor_available)  
    {if (millis()-last_read_pres>100) 
@@ -472,7 +545,7 @@ void read_IO ()
       if (pressure_abs<0) pressure_abs=0;
      }
    }
-  if (prev_BPM != BPM || prev_A_amplitude !=A_amplitude)  display_LCD();
+  if (prev_BPM != BPM || prev_Compression_perc !=Compression_perc)  display_LCD();
   if (SW3==0 && SW3FB==1)  // start /  stop breathing motion   
       {
         run_profile=1-run_profile; 
@@ -489,7 +562,7 @@ void send_data_to_monitor()
 { 
   if (monitor_index==0) Serial.println("A"); 
   if (monitor_index==1) Serial.println(byte(BPM)); 
-  if (monitor_index==2) Serial.println(byte(A_amplitude)); 
+  if (monitor_index==2) Serial.println(byte(Compression_perc)); 
   if (monitor_index==3) Serial.println(byte(pressure_abs)); 
   if (monitor_index==4) Serial.println(byte(failure)); 
   if (monitor_index==5) {if (send_beep) {Serial.println(byte(1)); send_beep=0;} else Serial.println(byte(0)); }
@@ -532,8 +605,8 @@ void print_tele ()  // UNCOMMENT THE TELEMETRY NEEDED
   Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
   Serial.print(" Ac:");  Serial.print(A_pot); 
 //  Serial.print(" cur:");  Serial.print(A_current); 
-//  Serial.print(" amp:");  Serial.print(A_amplitude); 
-//  Serial.print(" freq:");  Serial.print(A_freq); 
+//  Serial.print(" amp:");  Serial.print(Compression_perc); 
+//  Serial.print(" freq:");  Serial.print(A_rate); 
 //  Serial.print(" w cyc t:"); Serial.print(wanted_cycle_time);
 // Serial.print(" P(mBar):"); Serial.println(pressure_abs);
 //  Serial.print(" RF:");  Serial.print(range_factor); 
