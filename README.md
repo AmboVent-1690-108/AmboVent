@@ -8,6 +8,8 @@
 
 ## Emergency ventilation initiative coming out of Israel
 
+## The device was not tested yet for its performance or safety. it is not approved for clinical use
+
 ### Who is behind it?  
 **Lead by the CTO & innovation leader of the Israeli Air-Force 108 Electronic Depot and backed by a large community of innovators behind him**
 
