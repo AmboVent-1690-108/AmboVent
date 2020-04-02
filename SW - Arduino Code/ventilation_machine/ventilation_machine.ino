@@ -123,7 +123,6 @@ MS5803 sparkfumPress(ADDRESS_HIGH);
 // Motion profile parameters 
 // pos byte 0...255  units: promiles of full range
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
-
 // profile data:  press 250 points (50%) relase 250 
 
 byte pos[profile_length]={0,0,0,0,1,1,1,2,2,3,3,4,5,5,6,7,8,9,10,11,12,14,15,16,17,19,20,22,23,25,27,28,30,32,33,35,37,39,41,43,45,47,49,51,53,55,57,59,62,64,66,68,71,73,75,78,80,82,85,87,90,92,95,97,100,102,105,107,110,112,115,117,120,122,125,128,130,133,135,138,140,143,145,148,150,153,155,158,160,163,165,168,170,173,175,177,180,182,184,187,189,191,193,196,198,200,202,204,206,208,210,212,214,216,218,220,222,223,225,227,228,230,232,233,235,236,238,239,240,241,243,244,245,246,247,248,249,250,250,251,252,252,253,253,254,254,254,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,254,254,254,253,253,252,252,251,250,250,249,248,248,247,246,245,244,243,242,241,239,238,237,236,234,233,232,230,229,227,225,224,222,220,219,217,215,213,211,209,207,205,203,201,199,197,195,193,191,188,186,184,182,179,177,175,172,170,167,165,163,160,158,155,153,150,148,145,143,140,138,135,133,130,128,125,123,120,118,115,113,110,108,105,103,101,98,96,94,91,89,87,85,83,80,78,76,74,72,70,68,66,65,63,61,59,58,56,54,53,51,50,48,47,46,45,43,42,41,40,39,38,37,36,35,34,33,32,31,31,30,29,28,27,26,26,25,24,23,22,22,21,20,20,19,18,18,17,16,16,15,15,14,14,13,13,12,12,11,11,10,10,9,9,9,8,8,7,7,7,6,6,6,5,5,5,5,4,4,4,4,3,3,3,3,3,3,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -168,7 +167,7 @@ void setup() {
     lcd.backlight();  // Turn on the blacklight and print a message.
   }
   
-  for (i = 0; i < 2; i++) {UniqueIDdump(Serial);  delay(100); }
+  for (i = 0; i < 2; i++) {UniqueIDdump(Serial);  delay(100); }  // for IAI monitor run for 100 cycles
   
   run_profile=0;
   EEPROM.get(min_address, min_arm_pos);   delay (100);
@@ -182,10 +181,8 @@ void loop()
   read_IO ();
   run_profile_func ();
   find_min_max_pressure();
-  if (LCD_available) {if (index >= (profile_length-2)) 
-                      if (sent_LCD==0) {sent_LCD=1; display_LCD();}
-                      if (index==0) sent_LCD=0;
-                      }
+  if (LCD_available) {if (index >= (profile_length-2)) if (sent_LCD==0) {sent_LCD=1; display_LCD();}
+                      if (index==0) sent_LCD=0; }
 
   if (millis()-last_sent_data>7)
   { 
@@ -203,21 +200,25 @@ void run_profile_func()
 {
   if (run_profile)
   {
-     if (millis()-lastIndex >= wanted_cycle_time)                        // wait for the cycle time
+     if (millis()-lastIndex >= wanted_cycle_time)                        // do when cycle time was reached
      {
-      cycles_lost = (millis()-lastIndex)/wanted_cycle_time-1;     if (cycles_lost>15) cycles_lost=15;
+      cycles_lost = (millis()-lastIndex)/wanted_cycle_time-1;  
+      cycles_lost=limit_int(cycles_lost,0,15);
       lastIndex=millis();  // last start of cycle time
 
-      range = range_factor*(max_arm_pos - min_arm_pos);  
-      wanted_pos = float(pos[index])*range/255 + min_arm_pos;  // wanted pos in pot clicks
-      profile_planned_vel = (float(vel[index+1]) - 128.01)*range/255;  // in clicks per 0.2 second
+      range = range_factor*(max_arm_pos - min_arm_pos);                 // range of movement in pot' readings
+      wanted_pos = float(pos[index])*range/255 + min_arm_pos;           // wanted pos in pot clicks
+      profile_planned_vel = (float(vel[index+1]) - 128.01)*range/255;   // in clicks per 0.2 second
       if (hold_breath==1 && safety_pressure_detected==0) 
         {   if (wanted_pos <= float (A_pot) || index ==0) hold_breath=0;
             planned_vel=0; 
             integral = 0;       
-            wanted_pos = float (A_pot);  // float(pos[index_to_hold_breath])*range/255 + min_arm_pos;
+            wanted_pos = float (A_pot);                                 // hold current position
         }
-      else { planned_vel= profile_planned_vel;}
+      else 
+        { 
+          planned_vel= profile_planned_vel;
+        }
       if (safety_pressure_detected) planned_vel=-speed_multiplier_reverse*planned_vel;          // to do the revese in case high pressure detected
 
       error = wanted_pos-float(A_pot);    
@@ -230,19 +231,24 @@ void run_profile_func()
 
       if (planned_vel<0) f_reduction_up = f_reduction_up_val; else f_reduction_up=1;  // reduce f for the movement up
   
-      wanted_vel_PWM = F*planned_vel*f_reduction_up + KP*error+KI*integral;
-      wanted_vel_PWM = wanted_vel_PWM*float(cycleTime)/float(wanted_cycle_time);
+      wanted_vel_PWM = F*planned_vel*f_reduction_up + KP*error+KI*integral;           // PID correction 
+      wanted_vel_PWM = wanted_vel_PWM*float(cycleTime)/float(wanted_cycle_time);      // reduce speed for longer cycles 
  
-      if (safety_pressure_detected) {index-=speed_multiplier_reverse*(1+cycles_lost);  }         // run in reverse if high pressure was detected
-      if (index<0) { if(safety_pressure_detected==1) safety_pressure_counter+=1;
-                     safety_pressure_detected=0; wait_cycles=200*wait_time_after_resistance; index=profile_length -2;
+      if (safety_pressure_detected) {index-=speed_multiplier_reverse*(1+cycles_lost);  }  // run in reverse if high pressure was detected
+      if (index<0) { if(safety_pressure_detected==1) safety_pressure_counter+=1;          // count the number of cases reaching safety pressure
+                     safety_pressure_detected=0; 
+                     wait_cycles=200*wait_time_after_resistance; 
+                     index=profile_length-2;                                               // set index to the point of waiting 
                     }    // stop the reverse when reching the cycle start point
 
       if (in_wait==0) index +=(1+cycles_lost);    // dont advance index while waiting at the end of cycle 
       if (index >= (profile_length-2))            // wait for the next cycle to begin in this point -> 2 points befoe the last cycle index
         {
         if (millis()-start_wait < breath_cycle_time) { index = profile_length-2; in_wait=1;   }    // still need to wait ...
-        else { index =0; cycle_number+=1; start_wait=millis(); in_wait=0; send_beep=1; 
+        else {  index =0; cycle_number+=1; 
+                start_wait=millis(); 
+                in_wait=0; 
+                send_beep=1; 
                 high_pressure_detected=0;
              }            // time has come ... start from index = 0 
         }
@@ -262,6 +268,15 @@ else  // not running profile
 set_motor_PWM (wanted_vel_PWM);
 }
 
+int limit_int (int val,int low, int high)
+ {
+  int lim_val;
+  lim_val=val;
+  if (val<low) lim_val=low;
+  if (val>high) lim_val=high;
+  return (lim_val);
+ }
+ 
 void find_min_max_pressure()
 {
   if (max_pressure<pressure_abs) max_pressure=pressure_abs;           // find the max pressure in cycle 
@@ -297,40 +312,43 @@ void calc_failure()
   prev_index= index;
 }  
 
+void display_text_calib (char *message)
+{
+  lcd.clear(); 
+  lcd.setCursor(0, 0); lcd.print(message);  
+  lcd.setCursor(0, 1); lcd.print("Then press Test");
+}
+
 void calibrate_range()   // used for calibaration of motion range
 { 
   byte progress;
-  LED_USR(1);
+  LED_USR(1);   calibON = 1; 
   while (TST==1) {read_IO ();     blinkBlue (2); }
   progress=0; TSTFB=0; delay(30);
-  calibON = 1;  lcd.clear(); lcd.setCursor(0, 0); lcd.print("Move to upper");  lcd.setCursor(0, 1); lcd.print("Press Test");
+  display_text_calib ("Move to Upper");
   while (progress==0)  // step 1 - calibrate top position
   {
     blinkBlue (2); read_IO (); delay(5);
     if (TST ==0 && TSTFB==1) progress=1;
     set_motor_PWM (0);
-    if (millis()-last_sent_data>7)    {if (telemetry) print_tele();  last_sent_data=millis();  }
   }
-    LED_USR(0);
-  TSTFB=0;  delay(30);
+  TSTFB=0;  delay(30);  progress=0;  LED_USR(0);
   read_IO (); min_arm_pos=A_pot;
-  progress=0; lcd.clear(); lcd.setCursor(0, 0); lcd.print("Move to lower");   
-  lcd.setCursor(0, 1); lcd.print("Press Test");
+  display_text_calib ("Move to Lower");
   while (progress==0)  // step 2 - calibrate bottom position
   {
     blinkBlue (4);  read_IO (); delay(5);
     if (TST ==0 && TSTFB==1) progress=1;
     set_motor_PWM (0);
-    if (millis()-last_sent_data>7)    {if (telemetry) print_tele();  last_sent_data=millis();  }
   }
   TSTFB=0;  delay(30);   progress=0;   LED_USR(1);
-  read_IO ();   max_arm_pos=A_pot; lcd.clear(); lcd.setCursor(0, 0); lcd.print("Move to SAFE");   lcd.setCursor(0, 1); lcd.print("Press Test");
+  read_IO ();   max_arm_pos=A_pot; 
+  display_text_calib ("Move to Safe");
   while (progress==0)   // step 3 - manual control for positioning back in safe location 
   {
     blinkBlue (8);  read_IO (); delay(5);
     if (TST ==0 && TSTFB==1) progress=1;
     set_motor_PWM (0);
-    if (millis()-last_sent_data>7)    {if (telemetry) print_tele();  last_sent_data=millis();  }
   }
 
   EEPROM.put(min_address, min_arm_pos);  delay(200);
@@ -343,18 +361,15 @@ void calibrate_range()   // used for calibaration of motion range
 }
 
 void display_LCD()   // here function that sends data to LCD
-{ if (calibON==0) {
+{ 
+  if (calibON==0) {
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("BPM:");
-  lcd.print(byte(BPM));
-  lcd.print("  Dep:");
-  lcd.print(byte(A_amplitude));
-  lcd.print("%");
-  lcd.setCursor(0, 1); 
+  lcd.setCursor(0, 0);   lcd.print("BPM:");   lcd.print(byte(BPM));  
+  lcd.print("  Dep:"); lcd.print(byte(A_amplitude));  lcd.print("%");
+  lcd.setCursor(0, 1);  
   if (millis()- start_disp_pres<3000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
   else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
-}   
+  }   
 }
 
 void reset_failures()
@@ -420,9 +435,8 @@ void read_IO ()
   if(control_with_pot)
   {
   A_amplitude= perc_of_lower_volume_display + int(float(analogRead (pin_AMP))*(100-perc_of_lower_volume_display)/1023);
-  if (A_amplitude>100) A_amplitude=100;
-  if (A_amplitude<perc_of_lower_volume_display) A_amplitude=perc_of_lower_volume_display;
-  A_freq=      analogRead (pin_FRQ);
+  A_amplitude=limit_int(A_amplitude,perc_of_lower_volume_display,100);
+  A_freq= analogRead (pin_FRQ);
   BPM = 6+(A_freq-23)/55;
   breath_cycle_time = 60000/BPM;
   }
@@ -447,8 +461,7 @@ void read_IO ()
   if (range_factor>1) range_factor=1;  if (range_factor<0) range_factor=0; 
  
   if (pres_pot_available) insp_pressure= 10+analogRead (pin_PRE)/12;
-  if (insp_pressure<30) insp_pressure=30;
-  if (insp_pressure>70) insp_pressure=70;
+  insp_pressure=limit_int(insp_pressure,30,70);
   if (abs(insp_pressure-prev_insp_pressure)>1) { prev_insp_pressure=insp_pressure; start_disp_pres=millis(); display_LCD(); }
 
   if (pressure_sensor_available)  
