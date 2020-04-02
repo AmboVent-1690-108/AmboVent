@@ -194,8 +194,8 @@ void loop()
   read_IO ();
   run_profile_func ();
   find_min_max_pressure();
-  if (LCD_available) {if (index >= (profile_length-2)) if (sent_LCD==0) {sent_LCD=1; display_LCD();}
-                      if (index==0) sent_LCD=0; }
+  if (index >= (profile_length-2)) if (sent_LCD==0) {sent_LCD=1; display_LCD();}
+  if (index==1) sent_LCD=0;  
 
   if (millis()-last_sent_data>7)
   { 
@@ -421,7 +421,8 @@ void calibrate_pot_range()   // used for calibaration of potentiometers
   calibON = 0; display_LCD();
 }
 void display_LCD()   // here function that sends data to LCD
-{ 
+{ if (LCD_available) 
+{
   if (calibON==0) 
   {
   lcd.clear();
@@ -430,7 +431,6 @@ void display_LCD()   // here function that sends data to LCD
   lcd.setCursor(0, 1);  
   if (failure ==0)
     {
-
       if (millis()- start_disp_pres<3000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
       else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
     }
@@ -438,6 +438,7 @@ void display_LCD()   // here function that sends data to LCD
    if (failure ==2) lcd.print("High Pressure");
    if (failure ==3) lcd.print("Motion Fail");
   }   
+}
 }
 
 void reset_failures()
