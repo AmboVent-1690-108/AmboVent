@@ -28,7 +28,7 @@
 
 // UI
 #define deltaUD 5   // define the value chnage per each button press
-
+#define pot_alpha 0.85  // filter the pot values
 
 // clinical 
 #define perc_of_lower_volume 50.0      // % of max press - defines lower volume
@@ -40,7 +40,6 @@
 #define safety_pressure 70            // quicly pullnack arm when reaching this
 #define speed_multiplier_reverse 2    // factor of speeed for releasing the pressure (runs motion in reverse at X this speed
 #define smear_factor 0                // 0 to do all cycle in 2.5 seconds and wait for the rest 1 to "smear" the motion profile on the whole cycle time 
-
 
 #if (full_configuration==0)  // Arm connected with strip or wire
   #define LCD_available 0 
@@ -136,14 +135,14 @@ byte pos[profile_length]={0,0,0,0,1,1,1,2,2,3,3,4,5,5,6,7,8,9,10,11,12,14,15,16,
 byte vel[profile_length]={129,129,130,130,131,131,132,133,133,134,135,135,136,136,137,138,138,138,139,140,140,141,141,141,142,142,143,143,144,144,145,145,145,146,146,146,147,147,147,148,148,148,149,149,149,150,150,150,150,151,151,151,151,151,152,152,152,152,152,152,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,152,152,152,152,152,152,151,151,151,151,151,150,150,150,150,149,149,149,148,148,148,147,147,147,146,146,146,145,145,145,144,144,143,143,142,142,141,141,141,140,140,139,138,138,138,137,136,136,135,135,134,133,133,132,131,131,130,130,129,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,127,126,126,126,125,125,124,124,123,123,122,122,121,121,120,120,120,119,118,118,118,117,117,116,116,115,115,115,114,114,113,113,113,112,112,111,111,111,110,110,109,109,109,108,108,108,107,107,107,107,106,106,106,105,105,105,105,105,104,104,104,104,104,104,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,104,104,104,104,104,105,105,105,105,105,106,106,106,107,107,107,108,108,108,109,109,109,110,110,111,111,112,112,113,113,114,114,114,115,116,116,116,117,117,118,118,118,118,118,119,119,119,119,119,119,119,120,120,120,120,120,120,120,121,121,121,121,121,121,121,122,122,122,122,122,122,122,123,123,123,123,123,123,123,124,124,124,124,124,124,124,124,124,125,125,125,125,125,125,125,125,125,126,126,126,126,126,126,126,126,126,126,126,126,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128};
 
 byte FD,FU,AD,AU,FDFB,FUFB,ADFB,AUFB,SW3,SW3FB,TSTFB,run_profile,LED_status,USR_status,blueOn,calibrated=0, calibON, numBlinkAmp,numBlinkFreq;
-int A_pot,prevA_pot, A_current, Compression_perc=80, prev_Compression_perc, A_rate, A_comp, A_pres,pot_rate;
+int A_pot,prevA_pot, A_current, Compression_perc=80, prev_Compression_perc, A_rate, A_comp, A_pres;
 int motorPWM,index=0, prev_index,i, wait_cycles,cycle_number, cycles_lost,index_last_motion;
 unsigned int max_arm_pos=600, min_arm_pos=500;
 float wanted_pos, wanted_vel_PWM, range, range_factor, profile_planned_vel, planned_vel, integral, error, f_reduction_up ;
 unsigned long lastSent,lastBlink, lastIndex, lastUSRblink,last_TST_not_pressed,lastBlue,start_wait, last_sent_data, last_read_pres,start_disp_pres;
 byte monitor_index=0, BPM=14,prev_BPM, in_wait, failure, send_beep, wanted_cycle_time, disconnected=0,high_pressure_detected=0, motion_failure=0, sent_LCD, hold_breath, safety_pressure_detected;
 byte counter_ON,counter_OFF,SW3temp,insp_pressure,prev_insp_pressure, safety_pressure_counter, no_fail_counter,TST, counter_TST_OFF,counter_TST_ON,TSTtemp;
-float pressure_baseline;
+float pressure_baseline, pot_rate, pot_pres, pot_comp;
 int pressure_abs,breath_cycle_time, max_pressure=100 , prev_max_pressure=100, min_pressure=999, prev_min_pressure=999, index_to_hold_breath;
 int comp_pot_low=0,comp_pot_high=1023,rate_pot_low=0,rate_pot_high=1023,pres_pot_low=0,pres_pot_high=1023;
 
@@ -279,6 +278,7 @@ else  // not running profile
       {if (millis()-lastUSRblink>10) {USR_status=0; lastUSRblink=millis(); LED_USR(0);}}
       else {if (millis()-lastUSRblink>490) {USR_status=1; lastUSRblink=millis(); LED_USR(1);}}
     cycle_number=0;
+    failure=0;
     delay (1);
   }
 set_motor_PWM (wanted_vel_PWM);
@@ -502,20 +502,25 @@ void read_IO ()
   A_current= analogRead (pin_CUR)/8;  // in tenth Amps
   if(control_with_pot)
   { 
-    pot_rate = analogRead (pin_FRQ);
-    A_comp = range_pot(analogRead (pin_AMP),comp_pot_low,comp_pot_high);
-    A_rate = range_pot(pot_rate,rate_pot_low,rate_pot_high);
-    A_pres = range_pot(analogRead (pin_PRE),pres_pot_low,pres_pot_high);
+    A_rate = analogRead (pin_FRQ);
+    A_comp = analogRead (pin_AMP);
+    A_pres = analogRead (pin_PRE);
+    if (abs(pot_rate-A_rate)<5) pot_rate = pot_alpha*pot_rate + (1-pot_alpha)*A_rate; else pot_rate=A_rate;
+    if (abs(pot_comp-A_comp)<5) pot_comp = pot_alpha*pot_comp + (1-pot_alpha)*A_comp; else pot_comp=A_comp;
+    if (abs(pot_pres-A_pres)<5) pot_pres = pot_alpha*pot_pres + (1-pot_alpha)*A_pres; else pot_pres=A_pres;
+    A_comp = range_pot(int(pot_comp),comp_pot_low,comp_pot_high);
+    A_rate = range_pot(int(pot_rate),rate_pot_low,rate_pot_high);
+    A_pres = range_pot(int(pot_pres),pres_pot_low,pres_pot_high);
  
-  Compression_perc= perc_of_lower_volume_display + int(float(A_comp)*(100-perc_of_lower_volume_display)/1023);
-  Compression_perc=limit_int(Compression_perc,perc_of_lower_volume_display,100);
+    Compression_perc= perc_of_lower_volume_display + int(float(A_comp)*(100-perc_of_lower_volume_display)/1023);
+    Compression_perc=limit_int(Compression_perc,perc_of_lower_volume_display,100);
 
-  BPM = 6+(A_rate-23)/55;
-  breath_cycle_time = 60000/BPM;
+    BPM = 6+(A_rate-23)/55;
+    breath_cycle_time = 60000/BPM;
 
-  insp_pressure= 30+A_pres/25;
-  insp_pressure=limit_int(insp_pressure,30,70);
-  if (abs(insp_pressure-prev_insp_pressure)>1) { prev_insp_pressure=insp_pressure; start_disp_pres=millis(); display_LCD(); }
+    insp_pressure= 30+A_pres/25;
+    insp_pressure=limit_int(insp_pressure,30,70);
+    if (abs(insp_pressure-prev_insp_pressure)>1) { prev_insp_pressure=insp_pressure; start_disp_pres=millis(); display_LCD(); }
   }
   else
   {
@@ -545,7 +550,7 @@ void read_IO ()
       if (pressure_abs<0) pressure_abs=0;
      }
    }
-  if (prev_BPM != BPM || prev_Compression_perc !=Compression_perc)  display_LCD();
+  if (prev_BPM != BPM || prev_Compression_perc!=Compression_perc)  display_LCD();
   if (SW3==0 && SW3FB==1)  // start /  stop breathing motion   
       {
         run_profile=1-run_profile; 
