@@ -1,0 +1,6 @@
+We used the am-2235a Snow Blower Motor With Hex Shaft
+
+Any equivalent motor can fit, with a relevant adapter.
+- 12V
+- RPM 70 to 100
+- Torque >7NM

@@ -18,30 +18,29 @@
  */
  
 // system configuration 
-#define full_configuration 1               //  0 if the partial system - potentiometer on pulley, no potentiometers, ...
-
+#define full_configuration 1               // 1 is the default - full system.   0 is for partial system - potentiometer installed on pulley, no potentiometers, ...
 #define pressure_sensor_available 1
 
-// options for display and debug
+// options for display and debug via serial com
 #define send_to_monitor 0    // 1 = send data to monitor  0 = dont
 #define telemetry 1          // 1 = send telemtry fro debug
 
 // UI
-#define deltaUD 5   // define the value chnage per each button press
+#define deltaUD 5       // define the value chnage per each button press for the non-potentiometer version only
 #define pot_alpha 0.85  // filter the pot values
 
 // clinical 
 #define perc_of_lower_volume 50.0      // % of max press - defines lower volume
-#define perc_of_lower_volume_display 33.0      // % of max press - defines lower volume
-#define wait_time_after_resistance 3  // seconds
+#define perc_of_lower_volume_display 33.0   // % of max press - defines lower volume
+#define wait_time_after_resistance 3  // seconds to wait before re-attempt to push air after max pressure was achieved 
 #define max_pres_disconnected 10      // if the max pressure during breathing cycle does not reach this value - pipe is disconnected
-#define insp_pressure_default 40      // hold this pressure while breathing 
+#define insp_pressure_default 40      // defualt value - hold this pressure while breathing - the value is changed if INSP_Pressure potentiometer is inatalled 
 #define safety_pres_above_insp 10     // defines safety pressure as the inspirium pressure + this one
-#define safety_pressure 70            // quicly pullnack arm when reaching this
+#define safety_pressure 70            // quicly pullnack arm when reaching this pressure in cm H2O
 #define speed_multiplier_reverse 2    // factor of speeed for releasing the pressure (runs motion in reverse at X this speed
 #define smear_factor 0                // 0 to do all cycle in 2.5 seconds and wait for the rest 1 to "smear" the motion profile on the whole cycle time 
 
-#if (full_configuration==0)  // Arm connected with strip or wire
+#if (full_configuration==0)  // no pot for UI, feedback pot on pulley
   #define LCD_available 0 
   #define pres_pot_available 0        // 1 if the system has 3 potentiometer and can control the inspirium pressure 
   #define pin_SW3 7   // breath - On / Off / cal
@@ -56,7 +55,6 @@
   #define pin_AU 6    // Amp Up
   #define curr_sense 1 
   #define control_with_pot 0    // 1 = control with potentiometers  0 = with push buttons
-  
   #define F 0.6       // motion control feed forward  
   #define KP 0.2      // motion control propportional gain 
   #define KI 2        // motion control integral gain 
@@ -64,7 +62,7 @@
   #define f_reduction_up_val 0.65   // reduce feedforward by this factor when moving up 
 #endif
 
-#if (full_configuration==1) // Direct arm conection 
+#if (full_configuration==1) // feedback pot on arm, potentiometers for UI 
   #define LCD_available 1 
   #define pres_pot_available 1        // 1 if the system has 3 potentiometer and can control the inspirium pressure 
   #define pin_SW3 4         // breath - On / Off / cal
@@ -74,32 +72,28 @@
   #define pin_LED_FREQ 13   // frequency LED
   #define pin_LED_Fail 10   // FAIL and calib blue LED
   #define pin_USR 9         // User LED
-
   #define pin_FD 13    // freq Down
   #define pin_FU 13    // freq Up
   #define pin_AD 13    // Amp Down
   #define pin_AU 13    // Amp Up
   #define curr_sense 0
   #define control_with_pot 1    // 1 = control with potentiometers  0 = with push buttons
-
   #define F 5       // motion control feed forward  
   #define KP 2    // motion control propportional gain 
   #define KI 0      // motion control integral gain 
   #define integral_limit 5  // limits the integral of error 
   #define f_reduction_up_val 0.85    // reduce feedforward by this factor when moving up 
-
 #endif
 
-// Arduino pins alocation
+// other Arduino pins alocation
 #define pin_PWM 3
-
 #define pin_POT 0   // analog pin of potentiometer
 #define pin_CUR 1   // analog pin of current sense
 #define pin_AMP 2   // analog pin of amplitude potentiometer control
 #define pin_FRQ 3   // analog pin of amplitude frequency control
 #define pin_PRE 6   // analog pin of pressure control
 
-// Talon SR controller PWM settings ("angle" for Servo library) 
+// Talon SR or SPARK controller PWM settings ("angle" for Servo library) 
 #define PWM_mid 93  // mid value for PWM 0 motion - higher pushes up
 #define PWM_max 85
 #define PWM_min -85
