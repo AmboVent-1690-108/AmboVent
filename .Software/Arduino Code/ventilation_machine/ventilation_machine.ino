@@ -195,9 +195,6 @@ void loop()
   read_IO ();
   run_profile_func ();
   find_min_max_pressure();
-  if (index >= (profile_length-2)) if (sent_LCD==0) {sent_LCD=1; display_LCD();}
-  if (index<100) sent_LCD=0;  
-
   if (millis()-last_sent_data>13)
   { 
       if (telemetry) print_tele();
@@ -260,11 +257,13 @@ void run_profile_func()
       if (in_wait==0) index +=(1+cycles_lost);    // dont advance index while waiting at the end of cycle 
       if (index >= (profile_length-2))            // wait for the next cycle to begin in this point -> 2 points befoe the last cycle index
         {
+        if (sent_LCD==0) {sent_LCD=1; display_LCD();}
         if (millis()-start_wait < breath_cycle_time) { index = profile_length-2; in_wait=1;   }    // still need to wait ...
         else {  index =0; cycle_number+=1; 
                 start_wait=millis(); 
                 in_wait=0; 
                 send_beep=1; 
+                sent_LCD=0;
                 high_pressure_detected=0;
              }            // time has come ... start from index = 0 
         }
@@ -306,8 +305,8 @@ void find_min_max_pressure()
 {
   if (max_pressure<pressure_abs) max_pressure=pressure_abs;           // find the max pressure in cycle 
   if (min_pressure>pressure_abs) min_pressure=pressure_abs;           // find the min pressure in cycle 
-  if (index== profile_length-3) { prev_min_pressure = min_pressure; prev_max_pressure = max_pressure; }   
-  if (index== profile_length-2) { max_pressure=0;  min_pressure=999; }  
+  if (index > profile_length-10 && index < profile_length-5) { prev_min_pressure = min_pressure; prev_max_pressure = max_pressure; }   
+  if (index >=  profile_length-5) { max_pressure=0;  min_pressure=999; }  
 }
 
 void blink_user_led()
@@ -439,7 +438,7 @@ void display_LCD()   // here function that sends data to LCD
   lcd.setCursor(0, 1);  
   if (failure ==0)
     {
-      if (millis()- start_disp_pres<3000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
+      if (millis()- start_disp_pres<2000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
       else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
     }
    if (failure ==1) lcd.print("Pipe Disconnect");
@@ -526,7 +525,7 @@ void read_IO ()
     Compression_perc=limit_int(Compression_perc,perc_of_lower_volume_display,100);
 
     BPM = 6+(A_rate-23)/55;
-    breath_cycle_time = 60000/BPM;
+    breath_cycle_time = 60000/BPM+100;
 
     insp_pressure= 30+A_pres/25;
     insp_pressure=limit_int(insp_pressure,30,70);
@@ -540,7 +539,7 @@ void read_IO ()
     if (TST==0) {
         if (FD==0 && FDFB==1) {BPM-=2; if(BPM<6) BPM=6; cycle_number=0;} 
         if (FU==0 && FUFB==1) {BPM+=2; if(BPM>24) BPM=24; cycle_number=0;}
-        breath_cycle_time = 60000/BPM;
+        breath_cycle_time = 60000/BPM+100;
         if (AD==0 && ADFB==1) {Compression_perc-=deltaUD; if (Compression_perc<perc_of_lower_volume_display) Compression_perc=perc_of_lower_volume_display; }
         if (AU==0 && AUFB==1) {Compression_perc+=deltaUD; if (Compression_perc>100) Compression_perc=100;}
         }
