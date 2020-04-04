@@ -196,7 +196,7 @@ void loop()
   run_profile_func ();
   find_min_max_pressure();
   if (index >= (profile_length-2)) if (sent_LCD==0) {sent_LCD=1; display_LCD();}
-  if (index==1) sent_LCD=0;  
+  if (index<100) sent_LCD=0;  
 
   if (millis()-last_sent_data>13)
   { 
