@@ -499,7 +499,7 @@ void read_IO ()
   prev_BPM=BPM;
   prevA_pot=A_pot;
 
-  RST = (1-digitalRead  (RST));
+  RST = (1-digitalRead  (pin_RST));
   TSTtemp = (1-digitalRead  (pin_TST));
   SW2temp = (1-digitalRead (pin_SW2));
   if (SW2temp==1) {counter_ON+=1;  if (counter_ON>20)  {SW2=1; counter_ON=100; }} else counter_ON=0;
