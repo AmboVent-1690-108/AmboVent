@@ -5,16 +5,9 @@
  *  USE ONLY AT YOUR OWN RISK 
  */
 
-/* 
- *  potentiometers calibration method:
- *  1) place the rate pot at most left or right positions
- *  2) press Test for 5 seconds
- *  3) follow instructions on screen
- *  
- *  Arm position calibration method:
- *  1) place the rate pot near its center
- *  2) press Test for 5 seconds
- *  3) follow instructions on screen (use the Rate pos to move motor)
+/* to start calibrations - enter the maintenance setup menu by pressing TEST button for 3 seconds
+ *  using the RATE potentiometer select the calibration required and press TEST to select
+ *  follow instructions on screen
  */
  
 // system configuration 
@@ -232,7 +225,6 @@ void loop()
      if (telemetry==1) print_tele();
      last_sent_data=millis();
   }
-  if (calibrated ==0) { state=0;  calibrate_arm_range(); }
 }
 
 void display_menu()

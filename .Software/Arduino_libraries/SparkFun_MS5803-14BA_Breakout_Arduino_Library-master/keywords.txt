@@ -1,0 +1,30 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+MS5803	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+getTemperature	KEYWORD2
+getPressure	KEYWORD2
+reset	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+
+FAHRENHEIT	LITERAL1
+CELSIUS	LITERAL1
+
+ADDRESS_HIGH	LITERAL1
+ADDRESS_LOW	LITERAL1
+
+ADC_256	LITERAL1
+ADC_512	LITERAL1
+ADC_1024	LITERAL1
+ADC_2048	LITERAL1
+ADC_4096	LITERAL1
