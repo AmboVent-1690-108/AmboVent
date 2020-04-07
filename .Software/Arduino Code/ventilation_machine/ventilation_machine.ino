@@ -5,19 +5,20 @@
  *  USE ONLY AT YOUR OWN RISK 
  */
 
-/* to start calibrations - enter the maintenance setup menu by pressing TEST button for 3 seconds
+/*  to start calibrations - first enter the maintenance setup menu by pressing TEST button for 3 seconds
  *  using the RATE potentiometer select the calibration required and press TEST to select
  *  follow instructions on screen
+ *  for the Arm range calibration - use the Rate potentiometer to move the arm 
  */
  
 // system configuration 
 #define full_configuration 1               // 1 is the default - full system.   0 is for partial system - potentiometer installed on pulley, no potentiometers, ...
-#define pressure_sensor_available 1
-#define central_monitor_system 0        //  1 - send unique ID for 10 seconds upon startup, 0 - dont
+#define pressure_sensor_available 1        // 1 - you have installed an I2C pressure sensor 
+#define central_monitor_system 0           // 1 - send unique ID for 10 seconds upon startup, 0 - dont
 
 // options for display and debug via serial com
 #define send_to_monitor 1    // 1 = send data to monitor  0 = dont
-#define telemetry 0          // 1 = send telemtry fro debug
+#define telemetry 0          // 1 = send telemtry for debug  ... see end of code for optional telemetry data to send (uncomment selected lines)
 
 // UI
 #define deltaUD 5       // define the value chnage per each button press for the non-potentiometer version only
@@ -50,7 +51,7 @@
   #define pin_FU 5    // freq Up
   #define pin_AD 8    // Amp Down
   #define pin_AU 6    // Amp Up
-  #define curr_sense 1 
+  #define curr_sense 1  // 1- there is a curent sensor
   #define control_with_pot 0    // 1 = control with potentiometers  0 = with push buttons
   #define F 0.6       // motion control feed forward  
   #define KP 0.2      // motion control propportional gain 
@@ -69,37 +70,37 @@
   #define pin_LED_FREQ 13   // frequency LED
   #define pin_LED_Fail 10   // FAIL and calib blue LED
   #define pin_USR 9         // User LED
-  #define pin_FD 13    // freq Down
-  #define pin_FU 13    // freq Up
-  #define pin_AD 13    // Amp Down
-  #define pin_AU 13    // Amp Up
-  #define curr_sense 0
+  #define pin_FD 13         // freq Down - not used when you have potentiometers
+  #define pin_FU 13         // freq Up - not used when you have potentiometers
+  #define pin_AD 13         // Amp Down - not used when you have potentiometers
+  #define pin_AU 13         // Amp Up - not used when you have potentiometers
+  #define curr_sense 0      // o no current sensor
   #define control_with_pot 1    // 1 = control with potentiometers  0 = with push buttons
-  #define F 5       // motion control feed forward  
-  #define KP 2    // motion control propportional gain 
-  #define KI 5      // motion control integral gain 
+  #define F 5               // motion control feed forward  
+  #define KP 2              // motion control propportional gain 
+  #define KI 5              // motion control integral gain 
   #define integral_limit 5  // limits the integral of error 
   #define f_reduction_up_val 0.85    // reduce feedforward by this factor when moving up 
 #endif
 
 // other Arduino pins alocation
-#define pin_PWM 3
-#define pin_POT 0   // analog pin of potentiometer
+#define pin_PWM 3   // digital pin that sends the PWM to the motor
+#define pin_POT 0   // analog pin of motion feedback potentiometer
 #define pin_CUR 1   // analog pin of current sense
 #define pin_AMP 2   // analog pin of amplitude potentiometer control
-#define pin_FRQ 3   // analog pin of amplitude frequency control
-#define pin_PRE 6   // analog pin of pressure control
+#define pin_FRQ 3   // analog pin of rate potentiometer control
+#define pin_PRE 6   // analog pin of pressure potentiometer control
 
 // Talon SR or SPARK controller PWM settings ("angle" for Servo library) 
-#define PWM_mid 93  // was 93 until 3/4   mid value for PWM 0 motion - higher pushes up
+#define PWM_mid 93  // was 93 -   mid value for PWM 0 motion - higher pushes up
 #define PWM_max 85
 #define PWM_min -85
 #define max_allowed_current 100 // 10 Amps
 
 // motion control parameters
-#define cycleTime 10        // milisec
-#define alpha 0.95         // filter for current apatation - higher = stronger low pass filter
-#define profile_length 250 // motion control profile length 
+#define cycleTime 10          // milisec
+#define alpha 0.95            // filter for current apatation - higher = stronger low pass filter
+#define profile_length 250    // motion control profile length 
 #define motion_control_allowed_error  30  // % of range
 
 // motor and sensor definitions
@@ -122,10 +123,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address to 0x27 for a 16 char
 // Motion profile parameters 
 // pos byte 0...255  units: promiles of full range
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
-// profile data:  press 250 points (50%) relase 250 
-
-// byte pos[profile_length]={0,0,0,0,1,1,1,2,2,3,3,4,5,5,6,7,8,9,10,11,12,14,15,16,17,19,20,22,23,25,27,28,30,32,33,35,37,39,41,43,45,47,49,51,53,55,57,59,62,64,66,68,71,73,75,78,80,82,85,87,90,92,95,97,100,102,105,107,110,112,115,117,120,122,125,128,130,133,135,138,140,143,145,148,150,153,155,158,160,163,165,168,170,173,175,177,180,182,184,187,189,191,193,196,198,200,202,204,206,208,210,212,214,216,218,220,222,223,225,227,228,230,232,233,235,236,238,239,240,241,243,244,245,246,247,248,249,250,250,251,252,252,253,253,254,254,254,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,254,254,254,253,253,252,252,251,250,250,249,248,248,247,246,245,244,243,242,241,239,238,237,236,234,233,232,230,229,227,225,224,222,220,219,217,215,213,211,209,207,205,203,201,199,197,195,193,191,188,186,184,182,179,177,175,172,170,167,165,163,160,158,155,153,150,148,145,143,140,138,135,133,130,128,125,123,120,118,115,113,110,108,105,103,101,98,96,94,91,89,87,85,83,80,78,76,74,72,70,68,66,65,63,61,59,58,56,54,53,51,50,48,47,46,45,43,42,41,40,39,38,37,36,35,34,33,32,31,31,30,29,28,27,26,26,25,24,23,22,22,21,20,20,19,18,18,17,16,16,15,15,14,14,13,13,12,12,11,11,10,10,9,9,9,8,8,7,7,7,6,6,6,5,5,5,5,4,4,4,4,3,3,3,3,3,3,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-// byte vel[profile_length]={129,129,130,130,131,131,132,133,133,134,135,135,136,136,137,138,138,138,139,140,140,141,141,141,142,142,143,143,144,144,145,145,145,146,146,146,147,147,147,148,148,148,149,149,149,150,150,150,150,151,151,151,151,151,152,152,152,152,152,152,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,152,152,152,152,152,152,151,151,151,151,151,150,150,150,150,149,149,149,148,148,148,147,147,147,146,146,146,145,145,145,144,144,143,143,142,142,141,141,141,140,140,139,138,138,138,137,136,136,135,135,134,133,133,132,131,131,130,130,129,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,127,126,126,126,125,125,124,124,123,123,122,122,121,121,120,120,120,119,118,118,118,117,117,116,116,115,115,115,114,114,113,113,113,112,112,111,111,111,110,110,109,109,109,108,108,108,107,107,107,107,106,106,106,105,105,105,105,105,104,104,104,104,104,104,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,103,104,104,104,104,104,105,105,105,105,105,106,106,106,107,107,107,108,108,108,109,109,109,110,110,111,111,112,112,113,113,114,114,114,115,116,116,116,117,117,118,118,118,118,118,119,119,119,119,119,119,119,120,120,120,120,120,120,120,121,121,121,121,121,121,121,122,122,122,122,122,122,122,123,123,123,123,123,123,123,124,124,124,124,124,124,124,124,124,125,125,125,125,125,125,125,125,125,126,126,126,126,126,126,126,126,126,126,126,126,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128};
+// profile data:  press 125 points (50%) relase 125 
 
 byte pos[profile_length]={0,0,1,2,4,6,8,10,13,15,18,21,25,28,31,35,38,42,46,50,54,57,61,66,70,74,78,82,86,91,95,99,104,108,112,117,121,125,130,134,138,143,147,151,156,160,164,169,173,177,181,185,189,194,198,201,205,209,213,217,220,224,227,230,234,237,240,242,245,247,249,251,253,254,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,253,252,250,248,246,244,241,238,235,232,229,225,222,218,214,210,206,202,198,193,189,184,180,175,171,166,162,157,152,148,143,138,134,129,124,120,115,111,106,102,97,93,89,84,80,76,72,68,64,61,57,54,50,47,44,41,38,36,33,31,29,27,25,23,22,20,19,17,16,15,13,12,11,10,9,8,7,6,6,5,4,3,3,2,2,1,1,1,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
 byte vel[profile_length]={129,132,134,136,137,139,140,141,142,143,143,144,144,145,146,146,146,147,147,147,148,148,148,148,149,149,149,149,149,149,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,149,149,149,149,149,149,148,148,148,148,147,147,147,146,146,146,145,144,144,143,143,142,141,140,139,137,136,134,132,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,125,123,121,120,119,117,116,115,114,113,112,111,111,110,109,109,108,108,107,107,106,106,106,106,105,105,105,105,105,105,105,105,105,105,105,105,105,105,105,105,106,106,106,107,107,107,108,108,109,109,110,110,111,111,112,113,113,114,115,116,117,118,118,119,119,120,120,120,121,121,121,122,122,122,123,123,123,124,124,124,124,125,125,125,125,125,126,126,126,126,126,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,129,129,129,129,129,129,129,129,129,128,128,128,128,128};
@@ -321,7 +319,7 @@ void run_profile_func()
       integral += error*float(wanted_cycle_time)/1000;
       if (integral> integral_limit) integral= integral_limit;
       if (integral<-integral_limit) integral=-integral_limit;
-      if (index<2 || index ==220 ) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
+      if (index<2 || index ==140 ) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
 
       if (planned_vel<0) f_reduction_up = f_reduction_up_val; else f_reduction_up=1;  // reduce f for the movement up
   
@@ -336,21 +334,21 @@ void run_profile_func()
                     }    // stop the reverse when reching the cycle start point
 
       if (in_wait==0) index +=(1+cycles_lost);   //  advance index while not waiting at the end of cycle 
-      if (patient_triggered_breath==1)          // detect drop in presure during the PEEP plateu and trigger breath based on this
+      if (patient_triggered_breath==1)           // detect drop in presure during the PEEP plateu and trigger breath based on this
       { 
         if (in_wait==1 || (index>profile_length/2 && (A_pot<min_arm_pos+range/18))) 
         {
           if (avg_pres - pressure_abs > delta_pres_for_patient_inhale) start_new_cycle();    // start new breath cycle if patient tries to inhale durint the PEEP plateu
-          avg_pres = avg_pres * alpha_pres  + (1-alpha_pres) * float (pressure_abs);
+          avg_pres = avg_pres * alpha_pres  + (1-alpha_pres) * float (pressure_abs);         // calculate the filtered pressure
         }
-        else { avg_pres=pressure_abs; }
+        else { avg_pres=pressure_abs; }                                                      // initialize the filtered pressure
       }
       
-      if (index >= (profile_length-2))            // wait for the next cycle to begin in this point -> 2 points befoe the last cycle index
+      if (index >= (profile_length-2))                  // wait for the next cycle to begin in this point -> 2 points befoe the last cycle index
         {
-        if (sent_LCD==0) {sent_LCD=1; display_LCD();}
+        if (sent_LCD==0) {sent_LCD=1; display_LCD();}   // update the display at the end of cycle
         if (millis()-start_wait < breath_cycle_time) { index = profile_length-2; in_wait=1;   }    // still need to wait ...
-        else {  start_new_cycle(); }            // time has come ... start from index = 0 
+        else {  start_new_cycle(); }                    // time has come ... start from index = 0 
         }
       blink_user_led ();
     }
@@ -456,11 +454,13 @@ void display_pot_during_calib()
 {
       if (millis()-lastUSRblink>100) {lcd.setCursor(12, 0); lcd.print(A_pot); lcd.print("  "); lastUSRblink=millis();}
 }
+
 void calibrate_arm_range()   // used for calibaration of motion range
 { 
   byte progress;
   LED_USR(1);   calibON = 1; 
   progress=0;  delay(30);
+
   display_text_calib ("Set Upper");
   while (progress==0)  // step 1 - calibrate top position
   {
@@ -471,6 +471,7 @@ void calibrate_arm_range()   // used for calibaration of motion range
   }
   delay(30);  progress=0;  LED_USR(0);
   read_IO (); min_arm_pos=A_pot;
+
   display_text_calib ("Set Lower");
   while (progress==0)  // step 2 - calibrate bottom position
   {
@@ -481,6 +482,7 @@ void calibrate_arm_range()   // used for calibaration of motion range
   }
   delay(30);   progress=0;   LED_USR(1);
   read_IO ();   max_arm_pos=A_pot; 
+
   display_text_calib ("Move to Safe");
   while (progress==0)   // step 3 - manual control for positioning back in safe location 
   {
@@ -525,25 +527,26 @@ void calibrate_pot_range()   // used for calibaration of potentiometers
   EEPROM.put(28, pres_pot_low);   delay(100);
   EEPROM.put(32, pres_pot_high);  delay(100);
 }
+
 void display_LCD()   // here function that sends data to LCD
 { if (LCD_available) 
-{
-  if (calibON==0 && state!=2) 
   {
-  lcd.clear();
-  lcd.setCursor(0, 0);   lcd.print("BPM:");   lcd.print(byte(BPM));  
-  lcd.print("  Dep:"); lcd.print(byte(Compression_perc));  lcd.print("%");
-  lcd.setCursor(0, 1);  
-  if (failure ==0)
+  if (calibON==0 && state!=2) 
+    {
+    lcd.clear();
+    lcd.setCursor(0, 0);   lcd.print("BPM:");   lcd.print(byte(BPM));  
+    lcd.print("  Dep:"); lcd.print(byte(Compression_perc));  lcd.print("%");
+    lcd.setCursor(0, 1);  
+    if (failure ==0)
     {
       if (millis()- start_disp_pres<2000) { lcd.setCursor(0, 1); lcd.print("Insp. Press. :");  lcd.print(byte(insp_pressure));}
       else {lcd.print("Pmin:"); lcd.print(byte(prev_min_pressure)); lcd.print("  Pmax:"); lcd.print(byte(prev_max_pressure));}
     }
-   if (failure ==1) lcd.print("Pipe Disconnect");
-   if (failure ==2) lcd.print("High Pressure");
-   if (failure ==3) lcd.print("Motion Fail");
-  }   
-}
+    if (failure ==1) lcd.print("Pipe Disconnect");
+    if (failure ==2) lcd.print("High Pressure");
+    if (failure ==3) lcd.print("Motion Fail");
+    }   
+  }
 }
 
 void reset_failures()
@@ -579,8 +582,6 @@ int read_motion_for_calib()
       if (pot_rate>=250 && pot_rate<=750) wanted_cal_PWM=0;
       if (SW2==1) wanted_cal_PWM= -12;
       // if (RST==1) wanted_cal_PWM= 12;
-     
- //     Serial.println(wanted_cal_PWM);
     }
     else
     { wanted_cal_PWM=0;
@@ -699,8 +700,8 @@ void print_tele ()  // UNCOMMENT THE TELEMETRY NEEDED
 //  Serial.print(" min,max:");  Serial.print(min_arm_pos); Serial.print(","); Serial.print(max_arm_pos);  
 //  Serial.print(" WPWM :");  Serial.print(motorPWM); 
 //  Serial.print(" integral:");  Serial.print(int(integral));  
-  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
-  Serial.print(" Ac:");  Serial.print(A_pot); 
+//  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
+//  Serial.print(" Ac:");  Serial.print(A_pot); 
 //  Serial.print(" cur:");  Serial.print(A_current); 
 //  Serial.print(" amp:");  Serial.print(Compression_perc); 
 //  Serial.print(" freq:");  Serial.print(A_rate); 
