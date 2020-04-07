@@ -14,7 +14,7 @@
 **Lead by the CTO & innovation leader of the Israeli Air-Force 108 Electronic Depot and backed by a large community of innovators behind him**
 
 #### To include:
-40 Professional Volunteers - Israel’s national EMS, Physicians from leading Israeli hospitals such as Tel Aviv Sourasky and Hadassah JLM as well as other medical centers, Engineers, First Israel mentors and students,  The Haifa Technological Center  Rafael and Israel Aerospace Industries, IAF Unit 108, The garage program by Microsoft Israel  and others...
+40 Professional Volunteers - Magen David Adom (Israel’s national EMS), Physicians from leading Israeli hospitals such as Tel Aviv Sourasky and Hadassah JLM as well as other medical centers, Engineers, FIRST Israel mentors and students, The Haifa Technological Center Rafael, Israel Aerospace Industries, IAF Unit 108, The garage program by Microsoft Israel, IDC Herzeliya and others...
 
 ## [Site](https://1nn0v8ter.rocks/AmboVent-1690-108)
 
