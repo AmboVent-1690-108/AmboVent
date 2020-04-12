@@ -13,6 +13,13 @@ For the Arm range calibration:
 Use the Rate potentiometer to move the arm up/down.
 */
 
+#include "ArduinoUniqueID.h"
+#include <EEPROM.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+#include <SparkFun_MS5803_I2C.h>
+#include <Wire.h>
+
 // system configuration
 #define full_configuration 1               // 1 is the default - full system.   0 is for partial system - potentiometer installed on pulley, no potentiometers, ...
 #define pressure_sensor_available 1        // 1 - you have installed an I2C pressure sensor
@@ -108,13 +115,6 @@ Use the Rate potentiometer to move the arm up/down.
 // motor and sensor definitions
 #define invert_mot 1
 #define invert_pot 0
-
-#include <EEPROM.h>
-#include <Servo.h>
-#include <Wire.h>
-#include <SparkFun_MS5803_I2C.h>
-#include <LiquidCrystal_I2C.h>
-#include "ArduinoUniqueID.h"
 
 Servo motor;
 LiquidCrystal_I2C lcd(0x27, 16, 2);     // Set the LCD address to 0x27 for a 16 chars and 2 line display
