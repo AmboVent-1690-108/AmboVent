@@ -55,11 +55,11 @@ Use the Rate potentiometer to move the arm up/down.
   #define pin_AU 6      // Amp Up
   #define curr_sense 1  // 1- there is a curent sensor
   #define control_with_pot 0    // 1 = control with potentiometers  0 = with push buttons
-  #define FF 0.6         // motion control feed forward  
-  #define KP 0.2        // motion control propportional gain 
-  #define KI 2          // motion control integral gain 
-  #define integral_limit 6  // limits the integral of error 
-  #define f_reduction_up_val 0.65   // reduce feedforward by this factor when moving up 
+  #define FF 0.6         // motion control feed forward
+  #define KP 0.2        // motion control propportional gain
+  #define KI 2          // motion control integral gain
+  #define integral_limit 6  // limits the integral of error
+  #define f_reduction_up_val 0.65   // reduce feedforward by this factor when moving up
 #endif
 
 #if (full_configuration==1) // feedback pot on arm, potentiometers for UI
@@ -78,11 +78,11 @@ Use the Rate potentiometer to move the arm up/down.
   #define pin_AU 13         // Amp Up - not used when you have potentiometers
   #define curr_sense 0      // o no current sensor
   #define control_with_pot 1  // 1 = control with potentiometers  0 = with push buttons
-  #define FF 4.5              // motion control feed forward  
-  #define KP 1.2              // motion control propportional gain 
-  #define KI 7                // motion control integral gain 
-  #define integral_limit 5    // limits the integral of error 
-  #define f_reduction_up_val 0.85    // reduce feedforward by this factor when moving up 
+  #define FF 4.5              // motion control feed forward
+  #define KP 1.2              // motion control propportional gain
+  #define KI 7                // motion control integral gain
+  #define integral_limit 5    // limits the integral of error
+  #define f_reduction_up_val 0.85    // reduce feedforward by this factor when moving up
 #endif
 
 // other Arduino pins alocation
@@ -357,7 +357,7 @@ void exit_menu()
 }
 
 void run_profile_func()
-{ 
+{
   if (millis()-lastIndex >= wanted_cycle_time)                        // do when cycle time was reached
   {
     cycles_lost = (millis()-lastIndex)/wanted_cycle_time-1;
@@ -416,7 +416,7 @@ void calculate_wanted_pos_vel ()
   byte pos_from_profile,vel_from_profile;
   pos_from_profile = pgm_read_byte_near(pos+index);
   vel_from_profile = pgm_read_byte_near(vel+index+1);
-  
+
   range = range_factor*(max_arm_pos - min_arm_pos);                 // range of movement in pot' readings
   wanted_pos = float(pos_from_profile)*range/255 + min_arm_pos;           // wanted pos in pot clicks
   profile_planned_vel = (float(vel_from_profile) - 128.01)*range/255;   // in clicks per 0.2 second
@@ -438,9 +438,9 @@ void calculate_wanted_pos_vel ()
   if (integral<-integral_limit) integral=-integral_limit;
   if (index<2 || prev_error*error<0 ) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
   if (planned_vel<0) f_reduction_up = f_reduction_up_val; else f_reduction_up=1;  // reduce f for the movement up
- 
-  wanted_vel_PWM = FF*planned_vel*f_reduction_up + KP*error+KI*integral;           // PID correction 
-  wanted_vel_PWM = wanted_vel_PWM*float(cycleTime)/float(wanted_cycle_time);      // reduce speed for longer cycles 
+
+  wanted_vel_PWM = FF*planned_vel*f_reduction_up + KP*error+KI*integral;           // PID correction
+  wanted_vel_PWM = wanted_vel_PWM*float(cycleTime)/float(wanted_cycle_time);      // reduce speed for longer cycles
 }
 
 void standby_func()  // not running profile
@@ -897,15 +897,15 @@ void LED_USR (byte val)
 void print_tele ()  // UNCOMMENT THE TELEMETRY NEEDED
 {
 //  Serial.print(" Fail (disc,motion,hiPres):"); Serial.print(disconnected); Serial.print(","); Serial.print(motion_failure); Serial.print(","); Serial.print(high_pressure_detected);
-//  Serial.print(" CL:");  Serial.print(cycles_lost);  
-//  Serial.print(" min,max:");  Serial.print(min_arm_pos); Serial.print(","); Serial.print(max_arm_pos);  
-//  Serial.print(" WPWM :");  Serial.print(motorPWM); 
-//  Serial.print(" integral:");  Serial.print(int(integral));  
-  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
-  Serial.print(" Ac:");  Serial.print(A_pot); 
-//  Serial.print(" cur:");  Serial.print(A_current); 
-//  Serial.print(" amp:");  Serial.print(Compression_perc); 
-//  Serial.print(" freq:");  Serial.print(A_rate); 
+//  Serial.print(" CL:");  Serial.print(cycles_lost);
+//  Serial.print(" min,max:");  Serial.print(min_arm_pos); Serial.print(","); Serial.print(max_arm_pos);
+//  Serial.print(" WPWM :");  Serial.print(motorPWM);
+//  Serial.print(" integral:");  Serial.print(int(integral));
+  Serial.print(" Wa:");  Serial.print(int(wanted_pos));
+  Serial.print(" Ac:");  Serial.print(A_pot);
+//  Serial.print(" cur:");  Serial.print(A_current);
+//  Serial.print(" amp:");  Serial.print(Compression_perc);
+//  Serial.print(" freq:");  Serial.print(A_rate);
 //  Serial.print(" w cyc t:"); Serial.print(wanted_cycle_time);
 //  Serial.print(" P :"); Serial.print(pressure_abs);
 //  Serial.print(" AvgP :"); Serial.print(int(avg_pres));
