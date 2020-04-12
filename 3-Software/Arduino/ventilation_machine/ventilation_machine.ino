@@ -53,7 +53,7 @@
   #define pin_AU 6      // Amp Up
   #define curr_sense 1  // 1- there is a curent sensor
   #define control_with_pot 0    // 1 = control with potentiometers  0 = with push buttons
-  #define F 0.6         // motion control feed forward  
+  #define FF 0.6         // motion control feed forward  
   #define KP 0.2        // motion control propportional gain 
   #define KI 2          // motion control integral gain 
   #define integral_limit 6  // limits the integral of error 
@@ -76,9 +76,9 @@
   #define pin_AU 13         // Amp Up - not used when you have potentiometers
   #define curr_sense 0      // o no current sensor
   #define control_with_pot 1  // 1 = control with potentiometers  0 = with push buttons
-  #define F 4.5               // motion control feed forward  
-  #define KP 1.5              // motion control propportional gain 
-  #define KI 15               // motion control integral gain 
+  #define FF 4.5              // motion control feed forward  
+  #define KP 1.2              // motion control propportional gain 
+  #define KI 7                // motion control integral gain 
   #define integral_limit 5    // limits the integral of error 
   #define f_reduction_up_val 0.85    // reduce feedforward by this factor when moving up 
 #endif
@@ -125,8 +125,8 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);     // Set the LCD address to 0x27 for a 16 
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
 // profile data:  press 125 points (50%) relase 125 
 
-const byte pos[profile_length]={0,0,1,2,4,6,8,10,13,15,18,21,25,28,31,35,38,42,46,50,54,57,61,66,70,74,78,82,86,91,95,99,104,108,112,117,121,125,130,134,138,143,147,151,156,160,164,169,173,177,181,185,189,194,198,201,205,209,213,217,220,224,227,230,234,237,240,242,245,247,249,251,253,254,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,253,252,250,248,246,244,241,238,235,232,229,225,222,218,214,210,206,202,198,193,189,184,180,175,171,166,162,157,152,148,143,138,134,129,124,120,115,111,106,102,97,93,89,84,80,76,72,68,64,61,57,54,50,47,44,41,38,36,33,31,29,27,25,23,22,20,19,17,16,15,13,12,11,10,9,8,7,6,6,5,4,3,3,2,2,1,1,1,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
-const byte vel[profile_length]={129,132,134,136,137,139,140,141,142,143,143,144,144,145,146,146,146,147,147,147,148,148,148,148,149,149,149,149,149,149,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,149,149,149,149,149,149,148,148,148,148,147,147,147,146,146,146,145,144,144,143,143,142,141,140,139,137,136,134,132,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,125,123,121,120,119,117,116,115,114,113,112,111,111,110,109,109,108,108,107,107,106,106,106,106,105,105,105,105,105,105,105,105,105,105,105,105,105,105,105,105,106,106,106,107,107,107,108,108,109,109,110,110,111,111,112,113,113,114,115,116,117,118,118,119,119,120,120,120,121,121,121,122,122,122,123,123,123,124,124,124,124,125,125,125,125,125,126,126,126,126,126,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,129,129,129,129,129,129,129,129,129,128,128,128,128,128};
+const PROGMEM byte pos[profile_length]={0,0,1,2,4,6,8,10,13,15,18,21,25,28,31,35,38,42,46,50,54,57,61,66,70,74,78,82,86,91,95,99,104,108,112,117,121,125,130,134,138,143,147,151,156,160,164,169,173,177,181,185,189,194,198,201,205,209,213,217,220,224,227,230,234,237,240,242,245,247,249,251,253,254,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254,253,252,250,248,246,244,241,238,235,232,229,225,222,218,214,210,206,202,198,193,189,184,180,175,171,166,162,157,152,148,143,138,134,129,124,120,115,111,106,102,97,93,89,84,80,76,72,68,64,61,57,54,50,47,44,41,38,36,33,31,29,27,25,23,22,20,19,17,16,15,13,12,11,10,9,8,7,6,6,5,4,3,3,2,2,1,1,1,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
+const PROGMEM byte vel[profile_length]={129,132,134,136,137,139,140,141,142,143,143,144,144,145,146,146,146,147,147,147,148,148,148,148,149,149,149,149,149,149,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,149,149,149,149,149,149,148,148,148,148,147,147,147,146,146,146,145,144,144,143,143,142,141,140,139,137,136,134,132,129,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,127,125,123,121,120,119,117,116,115,114,113,112,111,111,110,109,109,108,108,107,107,106,106,106,106,105,105,105,105,105,105,105,105,105,105,105,105,105,105,105,105,106,106,106,107,107,107,108,108,109,109,110,110,111,111,112,113,113,114,115,116,117,118,118,119,119,120,120,120,121,121,121,122,122,122,123,123,123,124,124,124,124,125,125,125,125,125,126,126,126,126,126,127,127,127,127,127,127,127,128,128,128,128,128,128,128,128,128,128,128,128,129,129,129,129,129,129,129,129,129,128,128,128,128,128};
 
 byte FD,FU,AD,AU,prev_FD,prev_FU,prev_AD,prev_AU,SW2,prev_SW2,prev_TST,RST,LED_status,USR_status,blueOn,calibrated=0, calibON, numBlinkFreq, SW2_pressed,TST_pressed,menu_state;
 byte monitor_index=0, BPM=14,prev_BPM, in_wait, failure, send_beep, wanted_cycle_time, disconnected=0,high_pressure_detected=0, motion_failure=0, sent_LCD, hold_breath, safety_pressure_detected;
@@ -355,7 +355,7 @@ void exit_menu()
 }
 
 void run_profile_func()
-{
+{ 
   if (millis()-lastIndex >= wanted_cycle_time)                        // do when cycle time was reached
   {
     cycles_lost = (millis()-lastIndex)/wanted_cycle_time-1;  
@@ -411,9 +411,14 @@ void run_profile_func()
 
 void calculate_wanted_pos_vel ()
 {
+  byte pos_from_profile,vel_from_profile;
+  pos_from_profile = pgm_read_byte_near(pos+index);
+  vel_from_profile = pgm_read_byte_near(vel+index+1);
+  
   range = range_factor*(max_arm_pos - min_arm_pos);                 // range of movement in pot' readings
-  wanted_pos = float(pos[index])*range/255 + min_arm_pos;           // wanted pos in pot clicks
-  profile_planned_vel = (float(vel[index+1]) - 128.01)*range/255;   // in clicks per 0.2 second
+  wanted_pos = float(pos_from_profile)*range/255 + min_arm_pos;           // wanted pos in pot clicks
+  profile_planned_vel = (float(vel_from_profile) - 128.01)*range/255;   // in clicks per 0.2 second
+
   planned_vel = profile_planned_vel;
   if (hold_breath==1 && safety_pressure_detected==0) 
   {   
@@ -429,10 +434,10 @@ void calculate_wanted_pos_vel ()
   integral += error*float(wanted_cycle_time)/1000;
   if (integral> integral_limit) integral= integral_limit;
   if (integral<-integral_limit) integral=-integral_limit;
-  if (index<2 || prev_error*error<0) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
+  if (index<2 || prev_error*error<0 ) integral=0;   // zero the integral accumulator at the beginning of cycle and movement up
   if (planned_vel<0) f_reduction_up = f_reduction_up_val; else f_reduction_up=1;  // reduce f for the movement up
  
-  wanted_vel_PWM = F*planned_vel*f_reduction_up + KP*error+KI*integral;           // PID correction 
+  wanted_vel_PWM = FF*planned_vel*f_reduction_up + KP*error+KI*integral;           // PID correction 
   wanted_vel_PWM = wanted_vel_PWM*float(cycleTime)/float(wanted_cycle_time);      // reduce speed for longer cycles 
 }
 
@@ -894,8 +899,8 @@ void print_tele ()  // UNCOMMENT THE TELEMETRY NEEDED
 //  Serial.print(" min,max:");  Serial.print(min_arm_pos); Serial.print(","); Serial.print(max_arm_pos);  
 //  Serial.print(" WPWM :");  Serial.print(motorPWM); 
 //  Serial.print(" integral:");  Serial.print(int(integral));  
-//  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
-//  Serial.print(" Ac:");  Serial.print(A_pot); 
+  Serial.print(" Wa:");  Serial.print(int(wanted_pos));  
+  Serial.print(" Ac:");  Serial.print(A_pot); 
 //  Serial.print(" cur:");  Serial.print(A_current); 
 //  Serial.print(" amp:");  Serial.print(Compression_perc); 
 //  Serial.print(" freq:");  Serial.print(A_rate); 
