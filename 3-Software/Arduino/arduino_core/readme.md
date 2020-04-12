@@ -1,4 +1,4 @@
-Inside this folder should be a symbolic link to your arduino installation folder. This way, an Eclipse project can have full access to all of the Arduino source code to allow jumping to the core implementations of Arduino functions and definitions while exploring the code. 
+Inside this folder should be a symbolic link to your arduino installation folder. This way, an Eclipse project, for instance, can have full access to all of the Arduino source code to allow jumping to the core implementations of Arduino functions and definitions while exploring the code. 
 
 ## References:
 1. How to make symbolic links in Windows: 
@@ -6,7 +6,7 @@ Inside this folder should be a symbolic link to your arduino installation folder
 
 ## How to make the symbolic link to the core Arduino source code:
 
-**1) To create a symbolic link on Mac or Linux**, the command looks like this. This will create a symbolic link folder called "arduino" here: 
+**1) To create a symbolic link on Mac or Linux**, the command looks like this. This will create a symbolic link folder called "arduino" right here: 
 
     ln -s "/path/to/arduino_installation_folder" arduino
 
