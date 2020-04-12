@@ -1,16 +1,18 @@
 /*  
- *  THIS CODE WAS WRITTEN FOR TESTING AND RUNNING A HOME MADE VENTILATION DEVICE. 
- *  IT IS NOT TESTED FOR SAFETY AND NOT APPROVED FOR USE IN ANY CLINICAL , MEDICAL OR COMERCIAL DEVICE.
- *  IT IS NOT APPROVED BY ANY REGULAOTRY AUTHORITY
- *  USE ONLY AT YOUR OWN RISK 
- */
+THIS CODE WAS WRITTEN FOR TESTING AND RUNNING A HOME-MADE VENTILATION DEVICE. 
+IT IS NOT TESTED FOR SAFETY AND NOT APPROVED FOR USE IN ANY CLINICAL, MEDICAL OR COMERCIAL DEVICE.
+IT IS NOT APPROVED BY ANY REGULATORY AUTHORITY.
+USE ONLY AT YOUR OWN RISK.
 
-/*  to start calibrations - first enter the maintenance setup menu by pressing TEST button for 3 seconds
- *  using the RATE potentiometer select the calibration required and press TEST to select
- *  follow instructions on screen
- *  for the Arm range calibration - use the Rate potentiometer to move the arm up/down
- */
- 
+To start calibrations:
+First enter the maintenance setup menu by pressing the TEST button for 3 seconds.
+Using the RATE potentiometer select the calibration required and press TEST to select.
+Follow instructions on the screen.
+
+For the Arm range calibration:
+Use the Rate potentiometer to move the arm up/down.
+*/
+
 // system configuration 
 #define full_configuration 1               // 1 is the default - full system.   0 is for partial system - potentiometer installed on pulley, no potentiometers, ...
 #define pressure_sensor_available 1        // 1 - you have installed an I2C pressure sensor 
