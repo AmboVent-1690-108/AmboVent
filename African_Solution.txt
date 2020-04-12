@@ -41,4 +41,32 @@ A  (  1    )    O/       Wiper-Motor         /O  (        )     D A
 L   =======    D/                           /D  (=========)     E L
 L              +---------------------------+                    N L
                                         
+///
+Update:
+Looking at the code of the original, I see that the motor just pushes to a certain ammount and then retracts to have a certain pressure and to hold it.
+
+So using this approach only one AMBU can be used.
+
+//
+Doing it more "African"
+One uses two AMBU BAGS, rotates the motor through and just controls the 
+speed of the motor, so the motor always gives full strokes to the AMBU BAGS.
+In order to "control" the Pressure one uses the blow off valves in the AMBU 
+BAGS that have an override setting but here must be set to e.g. 40mm water
+to protect the lungs from overload.
+
+AMBU bags are made to be squeezed by humans without special controllers 
+so it is sufficient to have a motor of variable speed squeezing the AMBU bags.
+
+If one makes the box a bit to big one can add some moveable wooden parts to 
+control the ammount of compression the bag experiences from the motor,
+so the bag can be pushed more against the oscillating wood board or retracted
+a bit in order to control the volume to be send to the lungs with each cycle.
+
+So one can just use a "speed controller" which is a variable power supply 
+or a PWM speed controller of a model car to feed the wiper motor.
+It is important to have alternative ways and to connect a pulse oxymeter
+to the patient to be quickly alarmed if the machine fails and the oxygen in the blood declines.
+By all means have the box open, so a person can grab the AMBU bag and continue to operate it by hand as intended by the vendor of the AMBU!
+
                        
