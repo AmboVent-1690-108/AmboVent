@@ -32,4 +32,13 @@ Also wood work is quick and easy compared to cnc metal work.
 Just screw or nail the wiper mechanism into the wooden box. Sand the surfaces so they dont hurt the ambu and clad it with some cloth if you want to further protect the AMBU from friction and wear.
 No CAD drawings needed, just use wood tools and build the wiper assembly into a wooden box, use your intuition to make it fit.
 Looks like an "African solution" but it scales far better.
-  
+
+B                        Wiper Mechanics                          B
+O                   +---------------------------+               W O
+X  ( ======= )    W/ L                         /W (=========)   O X
+W  (AMBU-BAG  )  O/    I NK                   /O (AMBU-BAG2)    O W
+A  (  1    )    O/       Wiper-Motor         /O  (        )     D A
+L   =======    D/                           /D  (=========)     E L
+L              +---------------------------+                    N L
+                                        
+                       
