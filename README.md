@@ -8,15 +8,22 @@
 
 ## Emergency ventilation initiative coming out of Israel
 
-## The device was not tested yet for its performance or safety. it is NOT approved for clinical use
+## The device was not tested yet for its performance or safety; it is NOT approved for clinical use
 
 ### Who is behind it?  
-**Lead by the CTO & innovation leader of the Israeli Air-Force 108 Electronic Depot and backed by a large community of innovators behind him**
+**Lead by the CTO & innovation leader of the Israeli Air-Force 108 Electronic Depot and backed by a large community of innovators behind him, to include:**
 
-#### To include:
-40 Professional Volunteers - Magen David Adom (Israel’s national EMS), Physicians from leading Israeli hospitals such as Tel Aviv Sourasky and Hadassah JLM as well as other medical centers, Engineers, FIRST Israel mentors and students, The Haifa Technological Center Rafael, Israel Aerospace Industries, IAF Unit 108, The garage program by Microsoft Israel, IDC Herzeliya and others...
+1. 40 Professional Volunteers
+1. Magen David Adom (Israel’s national EMS)
+1. Physicians from leading Israeli hospitals such as Tel Aviv Sourasky and Hadassah JLM as well as other medical centers, Engineers, FIRST Israel mentors and students
+1. The Haifa Technological Center Rafael
+1. Israel Aerospace Industries
+1. IAF Unit 108
+1. The garage program by Microsoft Israel
+1. IDC Herzeliya
+1. and others...
 
-## [Site](https://1nn0v8ter.rocks/AmboVent-1690-108)
+## [AmboVent Website](https://1nn0v8ter.rocks/AmboVent-1690-108)
 
 ## [BOM list](https://docs.google.com/spreadsheets/d/1yqxRhruZpR-hO4cpbX6UkSeXTlXk1JLd_4aYDwuWj4k/edit?usp=sharing)
 
