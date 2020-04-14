@@ -591,7 +591,7 @@ void calc_failure()
   prev_index= index;
 }
 
-void display_text_2_lines (char *message1, char *message2)
+void display_text_2_lines (char const *message1, char const *message2)
 {
   if (millis()-lastUSRblink> 100)
   {
@@ -602,7 +602,7 @@ void display_text_2_lines (char *message1, char *message2)
   }
 }
 
-void display_text_calib (char *message)
+void display_text_calib (char const *message)
 {
   lcd.clear();
   lcd.setCursor(0, 0); lcd.print(message);
