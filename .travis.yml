@@ -16,5 +16,4 @@ install:
 
 
 script:
-    - platformio ci --lib="." --lib="/tmp/jeelib-master" --lib="/tmp/tinyFAT" --board=uno --board=megaatmega2560
     - platformio ci --lib=3-Software/Arduino/Libraries/Servo/ --lib=3-Software/Arduino/Libraries/SparkFun_MS5803-14BA_Breakout_Arduino_Library-master/ --lib=3-Software/Arduino/Libraries/Arduino-LiquidCrystal-I2C-library-master/ --lib=3-Software/Arduino/Libraries/ArduinoUniqueID/ --board=uno
