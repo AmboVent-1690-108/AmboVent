@@ -18,7 +18,6 @@ Use the Rate potentiometer to move the arm up/down.
 #include <Servo.h>
 #include <SparkFun_MS5803_I2C.h>
 #include <Wire.h>
-#include "ArduinoUniqueID.h"
 
 // system configuration
 #define full_configuration \
@@ -26,6 +25,10 @@ Use the Rate potentiometer to move the arm up/down.
        // pulley, no potentiometers, ...
 #define pressure_sensor_available 1  // 1 - you have installed an I2C pressure sensor
 #define central_monitor_system 0     // 1 - send unique ID for 10 seconds upon startup, 0 - dont
+
+#if central_monitor_system
+#include "ArduinoUniqueID.h"
+#endif
 
 // options for display and debug via serial com
 #define send_to_monitor 1  // 1 = send data to monitor  0 = dont
@@ -239,14 +242,13 @@ void setup()
         lcd.print("1690.108       ");
     }
 
-    if (central_monitor_system == 1)
+#if central_monitor_system 
+    for (i = 0; i < 100; i++)
     {
-        for (i = 0; i < 100; i++)
-        {
-            UniqueIDdump(Serial);
-            delay(100);
-        }  // for IAI monitor run for 100 cycles
-    }
+        UniqueIDdump(Serial);
+        delay(100);
+    }  // for IAI monitor run for 100 cycles
+ #endif
 
     state = STBY_STATE;
     EEPROM.get(4, min_arm_pos);
