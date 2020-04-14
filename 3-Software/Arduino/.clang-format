@@ -57,7 +57,7 @@ AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false # Never <== use on later clang-format versions
 # AllowShortLambdasOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
-AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true # Yes <== use on later clang-format versions
 BinPackArguments: true
@@ -127,7 +127,7 @@ IncludeIsMainRegex: '([-_](test|unittest))?$'
 # https://www.arduino.cc/reference/tr/language/structure/control-structure/switchcase/
 IndentCaseLabels: true
 # IndentGotoLabels: false
-# IndentPPDirectives: BeforeHash
+IndentPPDirectives: AfterHash # BeforeHash <== use on later clang-format versions
 IndentWidth:     2
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave
