@@ -1,0 +1,218 @@
+# This file is part of eRCaGuy_dotfiles: https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles
+#
+# ==================================================================================================
+# It is a custom file to represent my (Gabriel Staples's) CUSTOM FORMATTING PREFERENCES FOR C & C++!
+# ==================================================================================================
+# It was first generated with `clang-format --style=google --dump-config > .clang-format_google`.
+# Then, I modified it from there. 
+# To use it, rename it to just plain ".clang-format": `mv .clang-format_custom .clang-format`.
+#
+# References:
+# 1. https://clang.llvm.org/docs/ClangFormat.html
+# 2. "eRCaGuy_dotfiles/git & Linux cmds, help, tips & tricks - Gabriel.txt"
+# 3. Clang-Format Style Options: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+#    - Oops! This documentation is for clang-format version 11, but my version is 6; here's
+#      the documentation for version 6!:
+#      https://releases.llvm.org/6.0.1/tools/clang/docs/ClangFormatStyleOptions.html <===== USE 
+#      THIS! ===
+# 4. .clang-format interactive guide and builder! [very useful!--but is a little out-dated & 
+#    missing many options]: https://clangformat.com/
+# 
+# "The .clang-format file uses YAML format:" `key1: value1`
+#
+# To turn off clang formatting in a given section of C/C++ source code, do the following:
+#       // clang-format off
+#       // (this section of code will not be formatted)
+#       // clang-format on
+#
+# Tab size/indentation note: 
+# - If using the Arduino IDE, change your tab size from 2 to 4 by going 
+# to File --> Preferences --> look at the bottom of the window for "More preferences can be
+# edited directly in the file...". Clicking on this file link in the Arduino IDE should open up 
+# your file manager to this directory where Arduino's "preferences.txt" file is stored. Close 
+# the Arduino IDE, then open that "preferences.txt" file to edit it. On Linux Ubuntu 18.04 
+# for me, it is in "/home/gabriel/.arduino15/preferences.txt". 
+# Simply change the line that says `editor.tabs.size=2` to `editor.tabs.size=4`. Now your tab
+# size is set to 4 spaces instead of 2 spaces. Done!
+#
+# Just get a good editor!:
+# - Even better, however, is to just use an external editor instead, such as Eclipse or Sublime
+# Text 3, but still build in the Arduino IDE. In the Arduino IDE, go to File --> Preferences --> 
+# check the box for "Use external editor". I use both Sublime and Eclipse together, simultaneously.
+#   - Eclipse setup: see my PDF setup instructions guide in this repository folder here: 
+#     https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles/tree/master/eclipse
+#     It was last named "Eclipse setup instructions on a new Linux (or other OS) computer.pdf".
+#     Eclipse has perhaps the most powerful code indexer in the entire industry, so I highly
+#     recommend checking it out and starting to use it. It makes browsing the entire Arduino
+#     source code, for instance, sooooo much easier! From inside a .ino file in a project of mine,
+#     I can just Ctrl + Click on `pinMode()`, for instance, and it magically jumps to the
+#     "arduino/hardware/arduino/avr/cores/arduino/wiring_digital.c" file and shows the definition
+#     of `pinMode()`. Alt + Left Arrow jumps back. 
+#     If I right-click on `setup()`, then select "Open Call Hierarchy", then double-click on 
+#     "main()" in the little window that pops up at the bottom, it automatically jumps to the 
+#     call site for the Arduino `setup()` function, which is inside the C++ `main()` function
+#     defined in "arduino/hardware/arduino/avr/cores/arduino/main.cpp". This is a just a glimpse
+#     into its power! See my full setup guide referenced above. 
+#   - Sublime Text 3: download here (Windows, Mac, Linux): https://www.sublimetext.com/3.
+#     Learn to harness its power with the masterful Sublime Tutor tutorial: 
+#     https://sublimetutor.com/
+#
+# Sample style guides: 
+# 1. "Google C++ Style Guide": https://google.github.io/styleguide/cppguide.html
+# 2. "Linux kernel coding style" guide: 
+#    https://www.kernel.org/doc/Documentation/process/coding-style.rst
+
+---
+Language:        Cpp
+# BasedOnStyle:  Google (with heavy modifications, the biggest one being setting braces to
+# `BreakBeforeBraces: Allman`)
+AccessModifierOffset: -2
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+# AlignConsecutiveMacros: false
+AlignEscapedNewlines: Left
+AlignOperands:   true
+AlignTrailingComments: true
+# AllowAllArgumentsOnNextLine: false
+# AllowAllConstructorInitializersOnNextLine : false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false # Empty <== use on later clang-format versions
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false # Never <== use on later clang-format versions
+# AllowShortLambdasOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: true # Yes <== use on later clang-format versions
+BinPackArguments: true
+BinPackParameters: true
+# Per the documentation, this BraceWrapping section is only used if BreakBeforeBraces is set 
+# to Custom.
+# BraceWrapping:   
+#   AfterClass:      false
+#   AfterControlStatement: false
+#   AfterEnum:       false
+#   AfterFunction:   false
+#   AfterNamespace:  false
+#   AfterObjCDeclaration: false
+#   AfterStruct:     false
+#   AfterUnion:      false
+#   AfterExternBlock: false
+#   BeforeCatch:     false
+#   BeforeElse:      false
+#   IndentBraces:    false
+#   SplitEmptyFunction: true
+#   SplitEmptyRecord: true
+#   SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Allman
+# Not found in the docs; must be deprecated?:
+# BreakBeforeInheritanceComma: false
+BreakBeforeTernaryOperators: false
+# Not found in the docs; must be deprecated?:
+# BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: AfterColon
+# Not found in the docs; must be deprecated?:
+# BreakAfterJavaFieldAnnotations: false
+# BreakInheritanceList: AfterColon
+BreakStringLiterals: true
+ColumnLimit:     100
+CommentPragmas:  '^ IWYU pragma:'
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+# Note: see PointerAlignment too, as it's used as fallback in case deriving the pointer alignment
+# fails
+DerivePointerAlignment: true
+DisableFormat:   false
+ExperimentalAutoDetectBinPacking: false
+FixNamespaceComments: true
+ForEachMacros:   
+  - foreach
+  - Q_FOREACH
+  - BOOST_FOREACH
+IncludeBlocks:   Preserve
+IncludeCategories: 
+  - Regex:           '^<ext/.*\.h>'
+    Priority:        2
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^<.*'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+# I can add this one too if I want, but I'd need to specify a value:
+# IncludeIsMainSourceRegex: 
+# IndentCaseBlocks: false
+# true: same as Arduino does: 
+# https://www.arduino.cc/reference/tr/language/structure/control-structure/switchcase/
+IndentCaseLabels: false # prefer `true` if using a tab size of 2, `false` for 4
+# IndentGotoLabels: false
+IndentPPDirectives: AfterHash # BeforeHash <== use on later clang-format versions
+IndentWidth:     4
+IndentWrappedFunctionNames: false
+JavaScriptQuotes: Leave
+JavaScriptWrapImports: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+# For the `Language` key/value, see the very top of this configuration list
+MacroBlockBegin: ''
+MacroBlockEnd:   ''
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+# Not used: NameSpaceMacros
+# Not used: ObjCBinPackProtocolList
+ObjCBlockIndentWidth: 2
+# Not used: ObjCBreakBeforeNestedBlockParam
+ObjCSpaceAfterProperty: false
+ObjCSpaceBeforeProtocolList: false
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+# Not set, but could/should be: PenaltyBreakTemplateDeclaration
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 200
+# Note: see DerivePointerAlignment too, as it takes precedence
+PointerAlignment: Left
+RawStringFormats: 
+  - Delimiter:       pb
+    Language:        TextProto
+    BasedOnStyle:    google
+ReflowComments:  true
+SortIncludes:    true
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+# SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+# SpaceBeforeCpp11BracedList: true
+# SpaceBeforeCtorInitializerColon: true
+# SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+# SpaceBeforeRangeBasedForLoopColon: true
+# SpaceBeforeSquareBrackets: false
+# SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+# SpacesInConditionalStatement: false
+SpacesInContainerLiterals: true
+# Is alphabetically here, but in the documentation is earlier, so is already defined above:
+# SpacesInCStyleCastParentheses
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard:        Auto
+# Not used: StatementMacros
+TabWidth:        8
+# Not used: TypenameMacros
+# Not set: UseCRLF
+UseTab:          Never
+...
+
