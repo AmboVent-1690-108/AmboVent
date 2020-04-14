@@ -25,11 +25,37 @@
 #       // (this section of code will not be formatted)
 #       // clang-format on
 #
-# Tab size/indentation note: though I prefer 4 spaces for indentation, I'm OK with 2 for Arduino
-# code since that's the default for the Arduino IDE, which many others are using, and the only way
-# to change it in the Arduino IDE is to edit the preferences file (ex: 
-# "/home/gabriel/.arduino15/preferences.txt") while the Arduino IDE isn't running, which I'm not
-# going to force people to do. 
+# Tab size/indentation note: 
+# - If using the Arduino IDE, change your tab size from 2 to 4 by going 
+# to File --> Preferences --> look at the bottom of the window for "More preferences can be
+# edited directly in the file...". Clicking on this file link in the Arduino IDE should open up 
+# your file manager to this directory where Arduino's "preferences.txt" file is stored. Close 
+# the Arduino IDE, then open that "preferences.txt" file to edit it. On Linux Ubuntu 18.04 
+# for me, it is in "/home/gabriel/.arduino15/preferences.txt". 
+# Simply change the line that says `editor.tabs.size=2` to `editor.tabs.size=4`. Now your tab
+# size is set to 4 spaces instead of 2 spaces. Done!
+#
+# Just get a good editor!:
+# - Even better, however, is to just use an external editor instead, such as Eclipse or Sublime
+# Text 3, but still build in the Arduino IDE. In the Arduino IDE, go to File --> Preferences --> 
+# check the box for "Use external editor". I use both Sublime and Eclipse together, simultaneously.
+#   - Eclipse setup: see my PDF setup instructions guide in this repository folder here: 
+#     https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles/tree/master/eclipse
+#     It was last named "Eclipse setup instructions on a new Linux (or other OS) computer.pdf".
+#     Eclipse has perhaps the most powerful code indexer in the entire industry, so I highly
+#     recommend checking it out and starting to use it. It makes browsing the entire Arduino
+#     source code, for instance, sooooo much easier! From inside a .ino file in a project of mine,
+#     I can just Ctrl + Click on `pinMode()`, for instance, and it magically jumps to the
+#     "arduino/hardware/arduino/avr/cores/arduino/wiring_digital.c" file and shows the definition
+#     of `pinMode()`. Alt + Left Arrow jumps back. 
+#     If I right-click on `setup()`, then select "Open Call Hierarchy", then double-click on 
+#     "main()" in the little window that pops up at the bottom, it automatically jumps to the 
+#     call site for the Arduino `setup()` function, which is inside the C++ `main()` function
+#     defined in "arduino/hardware/arduino/avr/cores/arduino/main.cpp". This is a just a glimpse
+#     into its power! See my full setup guide referenced above. 
+#   - Sublime Text 3: download here (Windows, Mac, Linux): https://www.sublimetext.com/3.
+#     Learn to harness its power with the masterful Sublime Tutor tutorial: 
+#     https://sublimetutor.com/
 #
 # Sample style guides: 
 # 1. "Google C++ Style Guide": https://google.github.io/styleguide/cppguide.html
@@ -40,7 +66,7 @@
 Language:        Cpp
 # BasedOnStyle:  Google (with heavy modifications, the biggest one being setting braces to
 # `BreakBeforeBraces: Allman`)
-AccessModifierOffset: -1
+AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
@@ -96,8 +122,8 @@ ColumnLimit:     100
 CommentPragmas:  '^ IWYU pragma:'
 CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
-ConstructorInitializerIndentWidth: 2
-ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
 # Note: see PointerAlignment too, as it's used as fallback in case deriving the pointer alignment
 # fails
@@ -125,10 +151,10 @@ IncludeIsMainRegex: '([-_](test|unittest))?$'
 # IndentCaseBlocks: false
 # true: same as Arduino does: 
 # https://www.arduino.cc/reference/tr/language/structure/control-structure/switchcase/
-IndentCaseLabels: true
+IndentCaseLabels: false # prefer `true` if using a tab size of 2, `false` for 4
 # IndentGotoLabels: false
 IndentPPDirectives: AfterHash # BeforeHash <== use on later clang-format versions
-IndentWidth:     2
+IndentWidth:     4
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave
 JavaScriptWrapImports: true
