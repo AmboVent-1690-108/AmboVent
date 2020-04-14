@@ -38,9 +38,40 @@ THE AMBOVENT GROUP FROM ISRAEL DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMI
 
 ## Software
 
-1. (Optional) Eclipse project for Arduino source code _editing_ (NOT building): see:
+1. (Optional) Eclipse project for Arduino source code _editing_ (NOT building):
+    1. A general setup PDF guide can be found in the [eRCaGuy_dotfiles](https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles) project [here](https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles/blob/master/eclipse/Eclipse%20setup%20instructions%20on%20a%20new%20Linux%20(or%20other%20OS)%20computer.pdf). See also:
     1. [3-Software/Arduino/readme.md](3-Software/Arduino/readme.md).
     1. [3-Software/Arduino/arduino_core/readme.md](3-Software/Arduino/arduino_core/readme.md)
-1. `clang-format` tool
-    1. Linux: `sudo apt install clang-format`
-    1. Windows: 
+    1. [3-Software/Arduino/.clang-format](3-Software/Arduino/.clang-format) - there are some nice descriptions & info in here on Eclipse & Sublime Text 3 editors, as well as setting your Arduino IDE to use 4 spaces instead of 2 for tabs.
+1. `clang-format` automatic code format tool. Please run this on any PR before submitting!
+    1. Linux (tested--works): 
+        1. Install: 
+
+                # Install it:
+                sudo apt update
+                sudo apt install clang-format
+
+                # Ensure you have version 6 (the default for Ubuntu 18), for compatibility with 
+                # the .clang-format file we are using; sample output: 
+                # `clang-format version 6.0.0-1ubuntu2 (tags/RELEASE_600/final)`
+                clang-format --version
+        
+        1. Use it: 
+            1. Commit your changes so everything is backed up.
+            1. Then run the clang formatter:
+
+                    ./run_clang-format.sh
+
+            1. Then review and commit these changes, if any.
+            1. Now do a Pull Request.
+
+    1. Windows **(not tested--NEED HELP TESTING & WRITING THESE INSTRUCTIONS PLEASE):** 
+        1. Install:
+            1. Download and install [Git for Windows](https://git-scm.com/download/win)
+            1. Download and install LLVM (which includes `clang-format`) version **6.0.1** (for compatibility--see above) [for Windows, here](https://releases.llvm.org/download.html). Here's a [direct link](https://releases.llvm.org/6.0.1/LLVM-6.0.1-win64.exe) if you like for the 64-bit version.
+        1. Use it:
+            1. Using the git bash terminal that comes with git for Windows, run the script:
+
+                    ./run_clang-format.sh
+
+
