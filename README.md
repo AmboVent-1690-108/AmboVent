@@ -65,7 +65,7 @@ THE AMBOVENT GROUP FROM ISRAEL DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMI
             1. Then review and commit these changes, if any.
             1. Now do a Pull Request.
 
-    1. Windows **(not tested--NEED HELP TESTING & WRITING THESE INSTRUCTIONS PLEASE):** 
+    1. Windows:
         1. Install:
             1. Download and install [Git for Windows](https://git-scm.com/download/win)
             1. Download and install LLVM (which includes `clang-format`) version **6.0.1** (for compatibility--see above) [for Windows, here](https://releases.llvm.org/download.html). Here's a [direct link](https://releases.llvm.org/6.0.1/LLVM-6.0.1-win64.exe) if you like for the 64-bit version.
@@ -73,5 +73,7 @@ THE AMBOVENT GROUP FROM ISRAEL DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMI
             1. Using the git bash terminal that comes with git for Windows, run the script:
 
                     ./run_clang-format.sh
+
+            1. Make sure to do this before making any Pull Request (see Linux "Use it" instructions just above as well).
 
 
