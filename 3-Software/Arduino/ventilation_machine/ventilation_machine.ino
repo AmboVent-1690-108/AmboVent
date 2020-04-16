@@ -185,7 +185,7 @@ byte monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_
 byte counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure, safety_pressure_counter,
     no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
 byte patient_triggered_breath, motion_time, progress;
-int A_pot, prev_A_pot, A_current, Compression_perc = 80, prev_Compression_perc, A_rate, A_comp,
+int A_sensed_pos, prev_A_sensed_pos, A_current, Compression_perc = 80, prev_Compression_perc, A_rate, A_comp,
                                   A_pres;
 int motorPWM, index = 0, prev_index, i, wait_cycles, cycle_number, cycles_lost, index_last_motion;
 int pressure_abs, breath_cycle_time, max_pressure = 0, prev_max_pressure = 0, min_pressure = 100,
@@ -242,7 +242,7 @@ void setup()
         lcd.print("1690.108       ");
     }
 
-#if central_monitor_system 
+#if central_monitor_system
     for (i = 0; i < 100; i++)
     {
         UniqueIDdump(Serial);
@@ -466,7 +466,7 @@ void run_profile_func()
         if (patient_triggered_breath
             == 1)  // detect drop in presure during the PEEP plateu and trigger breath based on this
         {
-            if (in_wait == 1 || (index > profile_length / 2 && (A_pot < min_arm_pos + range / 18)))
+            if (in_wait == 1 || (index > profile_length / 2 && (A_sensed_pos < min_arm_pos + range / 18)))
             {
                 if (avg_pres - pressure_abs > delta_pres_patient_inhale)
                     start_new_cycle();  // start new breath cycle if patient tries to inhale durint
@@ -518,17 +518,17 @@ void calculate_wanted_pos_vel()
     planned_vel = profile_planned_vel;
     if (hold_breath == 1 && safety_pressure_detected == 0)
     {
-        if (wanted_pos <= float(A_pot) || index == 0)
+        if (wanted_pos <= float(A_sensed_pos) || index == 0)
             hold_breath = 0;
         planned_vel = 0;
         integral = 0;
-        wanted_pos = float(A_pot);  // hold current position
+        wanted_pos = float(A_sensed_pos);  // hold current position
     }
     if (safety_pressure_detected)
         planned_vel = -speed_multiplier_reverse
                       * planned_vel;  // to do the revese in case high pressure detected
     prev_error = error;
-    error = wanted_pos - float(A_pot);
+    error = wanted_pos - float(A_sensed_pos);
 
     integral += error * float(wanted_cycle_time) / 1000;
     if (integral > integral_limit)
@@ -739,7 +739,7 @@ void display_pot_during_calib()
     if (millis() - lastUSRblink > 100)
     {
         lcd.setCursor(13, 0);
-        lcd.print(A_pot);
+        lcd.print(A_sensed_pos);
         lcd.print(" ");
         lastUSRblink = millis();
     }
@@ -755,13 +755,13 @@ void calibrate_arm_range()  // used for calibaration of motion range
     while (progress == 0)
         internal_arm_calib_step();  // step 1 - calibrate top position
     progress = 0;
-    min_arm_pos = A_pot;
+    min_arm_pos = A_sensed_pos;
 
     display_text_calib("Set Lower");
     while (progress == 0)
         internal_arm_calib_step();  // step 2 - calibrate bottom position
     progress = 0;
-    max_arm_pos = A_pot;
+    max_arm_pos = A_sensed_pos;
 
     display_text_calib("Move to Safe");
     while (progress == 0)
@@ -868,7 +868,7 @@ void reset_failures()
 
 void set_motor_PWM(float wanted_vel_PWM)
 {
-    if (abs(A_pot - prev_A_pot) > 0 || abs(wanted_vel_PWM) < 15)
+    if (abs(A_sensed_pos - prev_A_sensed_pos) > 0 || abs(wanted_vel_PWM) < 15)
         index_last_motion = index;
     if (calibON == 1)
         wanted_vel_PWM = read_motion_for_calib();  // allows manual motion during calibration
@@ -932,7 +932,7 @@ void store_prev_values()
     prev_SW2 = SW2;
     prev_TST = TST;
     prev_BPM = BPM;
-    prev_A_pot = A_pot;
+    prev_A_sensed_pos = A_sensed_pos;
     prev_Compression_perc = Compression_perc;
 }
 
@@ -998,9 +998,9 @@ void read_IO()
     else
         TST_pressed = 0;
 
-    A_pot = analogRead(pin_POT);
+    A_sensed_pos = analogRead(pin_POT);
     if (invert_pot)
-        A_pot = 1023 - A_pot;
+        A_sensed_pos = 1023 - A_sensed_pos;
     A_current = analogRead(pin_CUR) / 8;  // in tenth Amps
     if (control_with_pot)
     {
@@ -1193,7 +1193,7 @@ void print_tele()  // UNCOMMENT THE TELEMETRY NEEDED
     Serial.print(" Wa:");
     Serial.print(int(wanted_pos));
     Serial.print(" Ac:");
-    Serial.print(A_pot);
+    Serial.print(A_sensed_pos);
     //  Serial.print(" cur:");  Serial.print(A_current);
     //  Serial.print(" amp:");  Serial.print(Compression_perc);
     //  Serial.print(" freq:");  Serial.print(A_rate);
