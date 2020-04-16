@@ -18,6 +18,7 @@ Use the Rate potentiometer to move the arm up/down.
 #include <Servo.h>
 #include <SparkFun_MS5803_I2C.h>
 #include <Wire.h>
+#include <ams_as5048b.h>
 
 // system configuration
 #define full_configuration \
@@ -133,12 +134,17 @@ Use the Rate potentiometer to move the arm up/down.
 // motor and sensor definitions
 #define invert_mot 1
 #define invert_pot 0
+#define magnetic_encoder 1
 
 Servo motor;
 LiquidCrystal_I2C lcd(0x27, 16,
                       2);  // Set the LCD address to 0x27 for a 16 chars and 2 line display
 #if (pressure_sensor_available == 1)
 MS5803 sparkfumPress(ADDRESS_HIGH);
+#endif
+
+#if (magnetic_encoder)
+AMS_AS5048B armSensor;
 #endif
 
 // Motion profile parameters
@@ -246,9 +252,14 @@ void setup()
     for (i = 0; i < 100; i++)
     {
         UniqueIDdump(Serial);
-        delay(100);
     }  // for IAI monitor run for 100 cycles
- #endif
+#endif
+
+#if (magnetic_encoder)
+    {
+        armSensor.begin();
+    }
+#endif
 
     state = STBY_STATE;
     EEPROM.get(4, min_arm_pos);
@@ -998,7 +1009,16 @@ void read_IO()
     else
         TST_pressed = 0;
 
-    A_sensed_pos = analogRead(pin_POT);
+    if (magnetic_encoder)
+    {
+        A_sensed_pos = 1024 * armSensor.angleR(U_TRN, true);
+    }
+    else
+    {
+        A_sensed_pos = analogRead(pin_POT);
+    }
+
+
     if (invert_pot)
         A_sensed_pos = 1023 - A_sensed_pos;
     A_current = analogRead(pin_CUR) / 8;  // in tenth Amps
