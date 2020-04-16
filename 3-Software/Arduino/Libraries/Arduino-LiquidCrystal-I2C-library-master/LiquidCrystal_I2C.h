@@ -57,7 +57,11 @@
  * The backlight is on by default, since that is the most likely operating mode in
  * most cases.
  */
+#ifdef ARDUINO_ARCH_MEGAAVR
+class LiquidCrystal_I2C : public arduino::Print {
+#else
 class LiquidCrystal_I2C : public Print {
+#endif
 public:
 	/**
 	 * Constructor
