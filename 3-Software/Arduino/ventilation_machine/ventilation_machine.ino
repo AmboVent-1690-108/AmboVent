@@ -19,6 +19,7 @@ Use the Rate potentiometer to move the arm up/down.
 #include <SparkFun_MS5803_I2C.h>
 #include <Wire.h>
 #include "ArduinoUniqueID.h"
+#include <sdpsensor.h>
 
 // system configuration
 #define full_configuration \
@@ -228,6 +229,8 @@ void setup()
         pressure_baseline = int(sparkfumPress.getPressure(ADC_4096));
     }
 #endif
+    SDPSensor s(SDPSensor::SDP8XX_I2C_ADDR_DEFAULT);
+    s.getDifferentialPressure();
 
     if (LCD_available)
     {
