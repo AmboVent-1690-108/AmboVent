@@ -139,11 +139,11 @@ MS5803 sparkfumPress(ADDRESS_HIGH);
 #endif
 
 // Motion profile parameters
-// pos byte 0...255  units: promiles of full range
+// pos uint8_t 0...255  units: promiles of full range
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
 // profile data:  press 125 points (50%) relase 125
 
-const PROGMEM byte pos[profile_length] = {
+const PROGMEM uint8_t pos[profile_length] = {
     0,   0,   1,   2,   4,   6,   8,   10,  13,  15,  18,  21,  25,  28,  31,  35,  38,  42,
     46,  50,  54,  57,  61,  66,  70,  74,  78,  82,  86,  91,  95,  99,  104, 108, 112, 117,
     121, 125, 130, 134, 138, 143, 147, 151, 156, 160, 164, 169, 173, 177, 181, 185, 189, 194,
@@ -158,7 +158,7 @@ const PROGMEM byte pos[profile_length] = {
     13,  12,  11,  10,  9,   8,   7,   6,   6,   5,   4,   3,   3,   2,   2,   1,   1,   1,
     0,   0,   0,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   2,   2,   2,
     1,   1,   1,   1,   1,   1,   1,   1,   1,   0,   0,   0,   0,   0,   0,   0};
-const PROGMEM byte vel[profile_length] = {
+const PROGMEM uint8_t vel[profile_length] = {
     129, 132, 134, 136, 137, 139, 140, 141, 142, 143, 143, 144, 144, 145, 146, 146, 146, 147,
     147, 147, 148, 148, 148, 148, 149, 149, 149, 149, 149, 149, 150, 150, 150, 150, 150, 150,
     150, 150, 150, 150, 150, 150, 150, 150, 150, 149, 149, 149, 149, 149, 149, 148, 148, 148,
@@ -174,14 +174,14 @@ const PROGMEM byte vel[profile_length] = {
     126, 127, 127, 127, 127, 127, 127, 127, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 129, 129, 129, 129, 129, 129, 129, 129, 129, 128, 128, 128, 128, 128};
 
-byte FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST, LED_status,
+uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST, LED_status,
     USR_status, blueOn, calibrated = 0, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
-byte monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
+uint8_t monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
      disconnected = 0, high_pressure_detected = 0, motion_failure = 0, sent_LCD, hold_breath,
      safety_pressure_detected;
-byte counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure, safety_pressure_counter,
+uint8_t counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure, safety_pressure_counter,
     no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
-byte patient_triggered_breath, motion_time, progress;
+uint8_t patient_triggered_breath, motion_time, progress;
 int A_pot, prev_A_pot, A_current, Compression_perc = 80, prev_Compression_perc, A_rate, A_comp,
                                   A_pres;
 int motorPWM, index = 0, prev_index, i, wait_cycles, cycle_number, cycles_lost, index_last_motion;
@@ -504,7 +504,7 @@ void run_profile_func()
 
 void calculate_wanted_pos_vel()
 {
-    byte pos_from_profile, vel_from_profile;
+    uint8_t pos_from_profile, vel_from_profile;
     pos_from_profile = pgm_read_byte_near(pos + index);
     vel_from_profile = pgm_read_byte_near(vel + index + 1);
 
@@ -1160,22 +1160,22 @@ void send_data_to_monitor()
         monitor_index = 0;
 }
 
-void LED_FREQ(byte val)
+void LED_FREQ(uint8_t val)
 {
     digitalWrite(pin_LED_FREQ, val);
 }
 
-void LED_AMP(byte val)
+void LED_AMP(uint8_t val)
 {
     digitalWrite(pin_LED_AMP, val);
 }
 
-void LED_FAIL(byte val)
+void LED_FAIL(uint8_t val)
 {
     digitalWrite(pin_LED_Fail, val);
 }
 
-void LED_USR(byte val)
+void LED_USR(uint8_t val)
 {
     digitalWrite(pin_USR, val);
 }
