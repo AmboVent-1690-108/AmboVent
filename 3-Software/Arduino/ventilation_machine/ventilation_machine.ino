@@ -18,8 +18,9 @@ Use the Rate potentiometer to move the arm up/down.
 #include <Servo.h>
 #include <SparkFun_MS5803_I2C.h>
 #include <Wire.h>
-#include "ArduinoUniqueID.h"
+#include <math.h>
 #include <sdpsensor.h>
+#include "ArduinoUniqueID.h"
 
 // system configuration
 #define full_configuration \
@@ -27,11 +28,12 @@ Use the Rate potentiometer to move the arm up/down.
        // pulley, no potentiometers, ...
 #define pressure_sensor_available 1  // 1 - you have installed an I2C pressure sensor
 #define central_monitor_system 0     // 1 - send unique ID for 10 seconds upon startup, 0 - dont
+#define FLOW_SENSOR_AVAILABLE true
 
 // options for display and debug via serial com
 #define send_to_monitor 1  // 1 = send data to monitor  0 = dont
 #define telemetry \
-    0  // 1 = send telemtry for debug  ... see end of code for optional telemetry data to send
+    1  // 1 = send telemtry for debug  ... see end of code for optional telemetry data to send
        // (uncomment selected lines)
 
 // UI
@@ -139,6 +141,10 @@ LiquidCrystal_I2C lcd(0x27, 16,
 MS5803 sparkfumPress(ADDRESS_HIGH);
 #endif
 
+#if (FLOW_SENSOR_AVAILABLE)
+SDPSensor flowSensor(SDPSensor::SDP8XX_I2C_ADDR_DEFAULT);
+#endif
+
 // Motion profile parameters
 // pos byte 0...255  units: promiles of full range
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
@@ -175,6 +181,13 @@ const PROGMEM byte vel[profile_length] = {
     126, 127, 127, 127, 127, 127, 127, 127, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 129, 129, 129, 129, 129, 129, 129, 129, 129, 128, 128, 128, 128, 128};
 
+// Flow calculation const
+const double A1_TUBE_DIAMETER = 0.022;  // Diameter of A1 tube in meters
+const double A2_TUBE_DIAMETER = 0.015;  // Diameter of A2 tube in meters
+const double AIR_P = 1.184;             // input (preset) for air at 1 atm pressure and 25C
+const double MIN_TO_SEC = 60;
+const double METER3_TO_LITER = 1000;
+
 byte FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST, LED_status,
     USR_status, blueOn, calibrated = 0, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
 byte monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
@@ -196,6 +209,13 @@ unsigned long lastSent, lastIndex, lastUSRblink, last_TST_not_pressed, lastBlue,
 float pot_rate, pot_pres, pot_comp, avg_pres;
 float wanted_pos, wanted_vel_PWM, range, range_factor, profile_planned_vel, planned_vel, integral,
     error, prev_error, f_reduction_up;
+
+// Flow variables
+double flowDiferencial;      // Sensor output
+double circle_area_A1;       // Circle area of A1 tube
+double circle_area_A2;       // Circle area of A2 tube
+double Q_meter3_per_sec;     // Q (m^3/sec) volumetric flow rate
+double Q_liter_per_minutes;  // Q (L/min)
 
 enum main_states : byte
 {
@@ -229,8 +249,14 @@ void setup()
         pressure_baseline = int(sparkfumPress.getPressure(ADC_4096));
     }
 #endif
-    SDPSensor s(SDPSensor::SDP8XX_I2C_ADDR_DEFAULT);
-    s.getDifferentialPressure();
+
+#if (FLOW_SENSOR_AVAILABLE)
+    {
+        flowSensor.init();
+        circle_area_A1 = get_circle_area_by_diameter(A1_TUBE_DIAMETER);
+        circle_area_A2 = get_circle_area_by_diameter(A2_TUBE_DIAMETER);
+    }
+#endif
 
     if (LCD_available)
     {
@@ -1113,17 +1139,28 @@ void read_IO()
     if (range_factor < 0)
         range_factor = 0;
 
-#if (pressure_sensor_available == 1)
+    if (millis() - last_read_pres > 100)
     {
-        if (millis() - last_read_pres > 100)
+        last_read_pres = millis();
+#if (pressure_sensor_available == 1)
         {
-            last_read_pres = millis();
             pressure_abs = int(sparkfumPress.getPressure(ADC_4096) - pressure_baseline);  // mbar
             if (pressure_abs < 0)
                 pressure_abs = 0;
         }
-    }
 #endif
+
+#if (FLOW_SENSOR_AVAILABLE)
+        {
+            flowDiferencial = get_sensor_flow_measurement();
+            Q_meter3_per_sec =
+                circle_area_A1
+                * square((2 / AIR_P)
+                         * (flowDiferencial / (pow(circle_area_A1 / circle_area_A2, 2) - 1)));
+            Q_liter_per_minutes = Q_meter3_per_sec * MIN_TO_SEC * METER3_TO_LITER;
+        }
+#endif
+    }
 
     if (prev_BPM != BPM || prev_Compression_perc != Compression_perc)
         display_LCD();
@@ -1132,6 +1169,17 @@ void read_IO()
         wanted_cycle_time = breath_cycle_time / profile_length;
     if (wanted_cycle_time < cycleTime)
         wanted_cycle_time = cycleTime;
+}
+
+float get_sensor_flow_measurement()
+{
+    flowSensor.readSample();
+    return flowSensor.getDifferentialPressure();
+}
+
+float get_circle_area_by_diameter(float diameter)
+{
+    return (diameter / 2) * (diameter / 2) * M_PI;
 }
 
 void send_data_to_monitor()
@@ -1189,12 +1237,11 @@ void print_tele()  // UNCOMMENT THE TELEMETRY NEEDED
     //  Serial.print(motion_failure); Serial.print(","); Serial.print(high_pressure_detected);
     //  Serial.print(" CL:");  Serial.print(cycles_lost);
     //  Serial.print(" min,max:");  Serial.print(min_arm_pos); Serial.print(",");
-    //  Serial.print(max_arm_pos); Serial.print(" WPWM :");  Serial.print(motorPWM); Serial.print("
-    //  integral:");  Serial.print(int(integral));
-    Serial.print(" Wa:");
-    Serial.print(int(wanted_pos));
-    Serial.print(" Ac:");
-    Serial.print(A_pot);
+    //  Serial.print(max_arm_pos); Serial.print(" WPWM :");  Serial.print(motorPWM);
+    //  Serial.print("integral:");  Serial.print(int(integral)); Serial.print(" Wa:");
+    //  Serial.print(int(wanted_pos));
+    //  Serial.print(" Ac:");
+    //  Serial.print(A_pot);
     //  Serial.print(" cur:");  Serial.print(A_current);
     //  Serial.print(" amp:");  Serial.print(Compression_perc);
     //  Serial.print(" freq:");  Serial.print(A_rate);
@@ -1202,5 +1249,7 @@ void print_tele()  // UNCOMMENT THE TELEMETRY NEEDED
     //  Serial.print(" P :"); Serial.print(pressure_abs);
     //  Serial.print(" AvgP :"); Serial.print(int(avg_pres));
     //  Serial.print(" RF:");  Serial.print(range_factor);
+    //  Serial.print(" FlowDif :"); Serial.print(flowDiferencial);
+        Serial.print(" Q :"); Serial.print(Q_liter_per_minutes);
     Serial.println("");
 }
