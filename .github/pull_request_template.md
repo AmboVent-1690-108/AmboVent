@@ -1,20 +1,26 @@
 ## Short description (1~4 lines):
-<!--- what problems does this solved? How? Use the longer details section below if needed --->
+<!--- What problems does this solve? How? Use the longer details section below if needed. --->
 
 
 ## Extra Details:
-<!--- extra details, optional; continued from above;
-Delete this section if you don't need it -->
+<!--- (Optional) extra details, continued from above;
+Delete this section if you don't need it. -->
 
 
 ## Checklist:
-<!--- add an X inside the square brackets when you've completed each item. This PR cannot merge until you have completed all items --->
+<!--- Add an X inside the square brackets below when you've completed each item. This PR cannot
+merge until you have completed all items. --->
 
-- [ ] I have run the code formatter with `./run_clang-format.sh` (see [README.md](README.md) for details)
+- [ ] I have run the code formatter with `./run_clang-format.sh` (see [README.md](README.md) for details on how)
 - [ ] I have built the code in the Arduino IDE (or with the command-line tool) and pasted the build output below
 
 **Arduino IDE build output:**  
 
+<!-- YYYYMMDD-HHMMhrs is the date and time you ran the build command; ex: 20200420-0049hrs means 20
+April 2020 at 0049 hrs (12:49AM--just after midnight). Also be sure to include at least the first 7
+chars of your git hash for the commit you had checked out when you performed the build. Lastly,
+specify your Arduino IDE version number and board. The board should be Nano unless you know
+differently. -->
 YYYYMMDD-HHMMhrs (git hash <7+ char git hash>) (IDE ?.?.??) (board: Arduino Nano)
 
     Sketch uses 99999 bytes (99%) of program storage space. Maximum is 32256 bytes.
