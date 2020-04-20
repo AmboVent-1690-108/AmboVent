@@ -22,14 +22,14 @@ Use the Rate potentiometer to move the arm up/down.
 
 // System Configuration
 
-/// Set to true for "full system" (the default), or to false for "partial system"--potentiometer 
+/// Set to true for "full system" (the default), or to false for "partial system"--potentiometer
 /// installed on pulley, no potentiometers... <---? TODO(@ElectricRCAircraftGuy): I request further
 /// explanation from @nimrod46--please update this description to be more clear.
 #define FULL_CONFIGURATION true
 /// Set to true if you have installed an I2C pressure sensor
-#define PRESSURE_SENSOR_AVAILABLE true  
+#define PRESSURE_SENSOR_AVAILABLE true
 /// Set to true to send unique ID for 10 seconds at startup, false otherwise
-#define CENTRAL_MONITOR_SYSTEM false 
+#define CENTRAL_MONITOR_SYSTEM false
 
 // Options for display and debug via serial communication port
 
@@ -42,33 +42,33 @@ Use the Rate potentiometer to move the arm up/down.
 // User Interface (UI) settings
 
 /// Define the value change per button press, in percent, for the non-potentiometer version only
-#define DELTA_COMPRESSION_PERCENT 5 
+#define DELTA_COMPRESSION_PERCENT 5
 /// IIR (Infinite Impulse Response) low-pass filter constant to filter the potentiometer values.
 /// This is a floating point value that must be >= 0 and < 1.0. Make closer to 1.0 to increase
 /// the strength of the low-pass filter, lowering the cutoff frequency and reducing the frequency
 /// response, and closer to 0 to have the opposite effect.
-#define POT_ALPHA 0.85  
+#define POT_ALPHA 0.85
 
 // Clinical settings
 
 // TODO(@ElectricRCAircraftGuy): request help from @nimrod46: the pressure units are inconsistent!
-// I need your help please to straighten in out. The Sparkfun `MS5803::getPressure()` function in 
+// I need your help please to straighten in out. The Sparkfun `MS5803::getPressure()` function in
 // "Libraries/SparkFun_MS5803-14BA_Breakout_Arduino_Library-master/src/SparkFun_MS5803_I2C.cpp" says
 // it returns values in units of Pascals, yet many comments here are referring to units of cm H2O.
 // 1 cm H2O = 98.0665 Pa.
 
 /// Percent of max pressure; defines the lower volume
-#define LOWER_VOLUME_PERCENT 50.0  
+#define LOWER_VOLUME_PERCENT 50.0
 /// Percent of max pressure; defines the lower volume to display when reaching the real lower volume
-/// TODO(@ElectricRCAircraftGuy): I request further clarification from @nimrod46--please update 
+/// TODO(@ElectricRCAircraftGuy): I request further clarification from @nimrod46--please update
 /// this--why is this different from LOWER_VOLUME_PERCENT?
-#define LOWER_VOLUME_DISPLAY_PERCENT 33.0  
+#define LOWER_VOLUME_DISPLAY_PERCENT 33.0
 /// Seconds to wait before re-attempting to push air after max pressure has been achieved
-#define WAIT_TIME_AFTER_RESISTANCE_SEC 3 
+#define WAIT_TIME_AFTER_RESISTANCE_SEC 3
 /// If the max pressure (in Pascals) during the breathing cycle does not reach this value it means
 /// the pipe is disconnected
-#define PRESSURE_MAX_DISCONNECTED_PA 10  
-/// Default inspiration (inhalation) pressure in Pascals; hold this pressure while breathing; the 
+#define PRESSURE_MAX_DISCONNECTED_PA 10
+/// Default inspiration (inhalation) pressure in Pascals; hold this pressure while breathing; the
 /// value is changed if the inspiration pressure potentiometer is installed
 #define PRESSURE_INSPIRATION_DEFAULT_PA 40
 /// Defines the safety pressure (maximum safe pressure) as the inspiration pressure + this pressure,
@@ -76,25 +76,25 @@ Use the Rate potentiometer to move the arm up/down.
 #define PRESSURE_SAFETY_ABOVE_INSPIRATION_PA 10
 /// Quickly pull back the arm when reaching this safety-critical pressure in cm H2O
 #define PRESSURE_SAFETY_CMH2O 70
-/// Speed multiplier for releasing the pressure (we will run the motion in reverse at a speed 
+/// Speed multiplier for releasing the pressure (we will run the motion in reverse at a speed
 /// equal to the normal forward speed x this speed multiplier)
 #define SPEED_MULTIPLIER_REVERSE 2
 /// Motion time in 100 millisecond counts; 35 = 3500 ms
-#define MOTION_TIME_DEFAULT_100MS 35  
-/// Set to true to trigger a new breath in case of patient inhale during the PEEP plateau; 
+#define MOTION_TIME_DEFAULT_100MS 35
+/// Set to true to trigger a new breath in case of patient inhale during the PEEP plateau;
 /// TODO(@ElectricRCAircraftGuy): what's a PEEP? Request clarity from @nimrod46--please fix this
-#define PATIENT_TRIGGERED_BREATH true  
-/// TODO(@ElectricRCAircraftGuy): to @nimrod46: need help; units say cmH2O yet other units are 
+#define PATIENT_TRIGGERED_BREATH true
+/// TODO(@ElectricRCAircraftGuy): to @nimrod46: need help; units say cmH2O yet other units are
 /// Pascals. See my TODO comment above. Also, this parameter needs a description.
 #define PRESSURE_DELTA_PATIENT_INHALE_CMH2O 5
 /// IIR (Infinite Impulse Response) low-pass filter constant to filter the pressure readings
 /// during PEEP plateau.
-/// TODO(@ElectricRCAircraftGuy): need help from @nimrod46. What's a PEEP plateau? Please update 
+/// TODO(@ElectricRCAircraftGuy): need help from @nimrod46. What's a PEEP plateau? Please update
 /// this description.
 /// This is a floating point value that must be >= 0 and < 1.0. Make closer to 1.0 to increase
 /// the strength of the low-pass filter, lowering the cutoff frequency and reducing the frequency
 /// response, and closer to 0 to have the opposite effect.
-#define PRESSURE_ALPHA 0.98              
+#define PRESSURE_ALPHA 0.98
 
 #if (FULL_CONFIGURATION == false)  // no pot for UI, feedback pot on pulley
 #    define LCD_available false
@@ -110,8 +110,8 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_FU 5                 // freq Up
 #    define pin_AD 8                 // Amp Down
 #    define pin_AU 6                 // Amp Up
-#    define curr_sense true             // 1- there is a curent sensor
-#    define control_with_pot false       // 1 = control with potentiometers  0 = with push buttons
+#    define curr_sense true          // 1- there is a curent sensor
+#    define control_with_pot false   // 1 = control with potentiometers  0 = with push buttons
 #    define FF 0.6                   // motion control feed forward
 #    define KP 0.2                   // motion control propportional gain
 #    define KI 2                     // motion control integral gain
@@ -122,7 +122,7 @@ Use the Rate potentiometer to move the arm up/down.
 #if (FULL_CONFIGURATION == true)  // feedback pot on arm, potentiometers for UI
 #    define LCD_available true
 #    define pres_pot_available \
-        true              // 1 if the system has 3 potentiometer and can control the inspirium pressure
+        true           // 1 if the system has 3 potentiometer and can control the inspirium pressure
 #    define pin_SW2 4  // breath - On / Off / cal
 #    define pin_TST 2  // test mode - not in use
 #    define pin_RST 5  // reset alarm - not in use
@@ -134,8 +134,8 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_FU 13                // freq Up - not used when you have potentiometers
 #    define pin_AD 13                // Amp Down - not used when you have potentiometers
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
-#    define curr_sense false             // o no current sensor
-#    define control_with_pot true       // 1 = control with potentiometers  0 = with push buttons
+#    define curr_sense false         // o no current sensor
+#    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
 #    define FF 4.5                   // motion control feed forward
 #    define KP 1.2                   // motion control propportional gain
 #    define KI 7                     // motion control integral gain
@@ -210,14 +210,14 @@ const PROGMEM uint8_t vel[profile_length] = {
     126, 127, 127, 127, 127, 127, 127, 127, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 129, 129, 129, 129, 129, 129, 129, 129, 129, 128, 128, 128, 128, 128};
 
-uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST, LED_status,
-    USR_status, blueOn, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
+uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST,
+    LED_status, USR_status, blueOn, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
 bool calibrated = false;
 uint8_t monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
-     disconnected = 0, high_pressure_detected = 0, motion_failure = 0, sent_LCD, hold_breath,
-     safety_pressure_detected;
-uint8_t counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure, safety_pressure_counter,
-    no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
+        disconnected = 0, high_pressure_detected = 0, motion_failure = 0, sent_LCD, hold_breath,
+        safety_pressure_detected;
+uint8_t counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure,
+    safety_pressure_counter, no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
 uint8_t patient_triggered_breath, motion_time, progress;
 int A_pot, prev_A_pot, A_current, Compression_perc = 80, prev_Compression_perc, A_rate, A_comp,
                                   A_pres;
@@ -506,9 +506,9 @@ void run_profile_func()
                 if (avg_pres - pressure_abs > PRESSURE_DELTA_PATIENT_INHALE_CMH2O)
                     start_new_cycle();  // start new breath cycle if patient tries to inhale durint
                                         // the PEEP plateu
-                avg_pres =
-                    avg_pres * PRESSURE_ALPHA
-                    + (1 - PRESSURE_ALPHA) * float(pressure_abs);  // calculate the filtered pressure
+                avg_pres = avg_pres * PRESSURE_ALPHA
+                           + (1 - PRESSURE_ALPHA)
+                                 * float(pressure_abs);  // calculate the filtered pressure
             }
             else
             {
@@ -717,7 +717,8 @@ void calc_failure()
     }  // high pressure detected
     if (pressure_abs > PRESSURE_SAFETY_CMH2O && profile_planned_vel > 0)
         safety_pressure_detected = 1;
-    if (pressure_abs > insp_pressure + PRESSURE_SAFETY_ABOVE_INSPIRATION_PA && profile_planned_vel > 0)
+    if (pressure_abs > insp_pressure + PRESSURE_SAFETY_ABOVE_INSPIRATION_PA
+        && profile_planned_vel > 0)
         safety_pressure_detected = 1;
     if (index == 0 && prev_index != 0 && failure == 0 && safety_pressure_detected == 0)
         no_fail_counter += 1;
