@@ -21,7 +21,7 @@ Use the Rate potentiometer to move the arm up/down.
 #include <math.h>
 #include <sdpsensor.h>
 #include "ArduinoUniqueID.h"
-
+#include <SoftwareSerial.h>
 // system configuration
 #define full_configuration \
     1  // 1 is the default - full system.   0 is for partial system - potentiometer installed on
@@ -134,6 +134,11 @@ Use the Rate potentiometer to move the arm up/down.
 #define invert_mot 1
 #define invert_pot 0
 
+//bluetooth pins and state
+#define BLE_enabled 1
+#define pin_BLE_TX 1
+#define pin_BLE_RX 0
+
 Servo motor;
 LiquidCrystal_I2C lcd(0x27, 16,
                       2);  // Set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -143,6 +148,10 @@ MS5803 sparkfumPress(ADDRESS_HIGH);
 
 #if (FLOW_SENSOR_AVAILABLE)
 SDPSensor flowSensor(SDPSensor::SDP8XX_I2C_ADDR_DEFAULT);
+#endif
+
+#if (BLE_enabled)
+SoftwareSerial BLESerial(pin_BLE_RX, pin_BLE_TX);
 #endif
 
 // Motion profile parameters
@@ -239,8 +248,19 @@ void setup()
     pinMode(pin_LED_Fail, OUTPUT);
     pinMode(pin_USR, OUTPUT);
     motor.attach(pin_PWM);
-    Serial.begin(115200);
+    #if (!BLE_enabled) //if we want to use rx pins 0,1 we must not call Serial.begin
+        Serial.begin(115200);
+    #endif
     Wire.begin();
+
+    //Bluetooth startup
+    BLESerial.begin(9600);
+    delay(100);
+    BLESerial.write("AT");
+    BLESerial.write("AT+ROLE0");
+    BLESerial.write("AT+UUID0xFFE0");
+    BLESerial.write("AT+CHAR0xFFE1");
+    BLESerial.write("AT+NAMEAmbovent");
 
 #if (pressure_sensor_available == 1)
     {
@@ -1193,31 +1213,54 @@ float get_circle_area_by_diameter(float diameter)
 
 void send_data_to_monitor()
 {
-    if (monitor_index == 0)
-        Serial.println("A");
-    if (monitor_index == 1)
-        Serial.println(byte(BPM));
-    if (monitor_index == 2)
-        Serial.println(byte(Compression_perc));
-    if (monitor_index == 3)
-        Serial.println(byte(pressure_abs));
-    if (monitor_index == 4)
-        Serial.println(byte(failure));
-    if (monitor_index == 5)
-    {
-        if (send_beep)
-        {
-            Serial.println(byte(1));
-            send_beep = 0;
-        }
-        else
-            Serial.println(byte(0));
+  char strFloat[8];
+
+  if (monitor_index==0) {
+    Serial.println("A");
+    BLESerial.write("A");
     }
-    if (monitor_index == 6)
-        Serial.println(byte(insp_pressure));
-    monitor_index += 1;
-    if (monitor_index == 7)
-        monitor_index = 0;
+  if (monitor_index==1) {
+    Serial.println(byte(BPM));
+    sprintf(strFloat,"-D%d",(int)BPM);
+    BLESerial.write(strFloat);
+    }
+  if (monitor_index==2) {
+    Serial.println(byte(Compression_perc));
+    sprintf(strFloat,"-D%d",(int)Compression_perc);
+    BLESerial.write(strFloat);
+    }
+  if (monitor_index==3) {
+    Serial.println(byte(pressure_abs));
+    sprintf(strFloat,"-D%d",(int)pressure_abs);
+    BLESerial.write(strFloat);
+    }
+  if (monitor_index==4) {
+    Serial.println(byte(failure));
+    sprintf(strFloat,"-D%d",(int)failure);
+    BLESerial.write(strFloat);
+    }
+  if (monitor_index==5)
+  {
+    if (send_beep)
+    {
+      Serial.println(byte(1));
+      BLESerial.write("-D1");
+      send_beep=0;
+    }
+    else {
+      Serial.println(byte(0));
+      BLESerial.write("-D0");
+    }
+  }
+  if (monitor_index==6){
+    Serial.println(byte(insp_pressure));
+    sprintf(strFloat,"-D%d",(int)insp_pressure);
+    BLESerial.write(strFloat);
+  }
+  
+  monitor_index+=1;
+  
+  if (monitor_index==7) monitor_index=0;
 }
 
 void LED_FREQ(byte val)
