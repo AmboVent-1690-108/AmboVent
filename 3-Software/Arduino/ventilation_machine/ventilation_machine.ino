@@ -21,6 +21,7 @@ Use the Rate potentiometer to move the arm up/down.
 #include <math.h>
 #include <sdpsensor.h>
 #include "ArduinoUniqueID.h"
+#include <SoftwareSerial.h>
 
 // System Configuration
 
@@ -30,6 +31,8 @@ Use the Rate potentiometer to move the arm up/down.
 #define FULL_CONFIGURATION true
 /// Set to true if you have installed an I2C pressure sensor
 #define PRESSURE_SENSOR_AVAILABLE true
+/// Set to true if you have installed an I2C flow sensor
+#define FLOW_SENSOR_AVAILABLE true
 /// Set to true to send unique ID for 10 seconds at startup, false otherwise
 #define CENTRAL_MONITOR_SYSTEM false
 
@@ -169,6 +172,13 @@ Use the Rate potentiometer to move the arm up/down.
 #define invert_mot true
 #define invert_pot false
 
+// Flow calculation definitions
+#define A1_TUBE_DIAMETER 0.022  // Diameter of A1 tube in meters
+#define A2_TUBE_DIAMETER 0.015  // Diameter of A2 tube in meters
+#define AIR_P 1.184             // input (preset) for air at 1 atm pressure and 25C
+#define MIN_TO_SEC 60
+#define METER3_TO_LITER 1000
+
 //bluetooth pins and state
 #define BLE_enabled 1
 #define pin_BLE_TX 1
@@ -224,13 +234,6 @@ const PROGMEM uint8_t vel[profile_length] = {
     122, 122, 123, 123, 123, 124, 124, 124, 124, 125, 125, 125, 125, 125, 126, 126, 126, 126,
     126, 127, 127, 127, 127, 127, 127, 127, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 129, 129, 129, 129, 129, 129, 129, 129, 129, 128, 128, 128, 128, 128};
-
-// Flow calculation const
-const double A1_TUBE_DIAMETER = 0.022;  // Diameter of A1 tube in meters
-const double A2_TUBE_DIAMETER = 0.015;  // Diameter of A2 tube in meters
-const double AIR_P = 1.184;             // input (preset) for air at 1 atm pressure and 25C
-const double MIN_TO_SEC = 60;
-const double METER3_TO_LITER = 1000;
 
 uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST,
     LED_status, USR_status, blueOn, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
