@@ -1,6 +1,6 @@
 ## General comments on the pressure sensor
 
-Please note that this sensor requires 3.3V and pull up to signal on the **SAME** VDD input __
+_Please note that this sensor requires VDD of 3.3V and pull up to signal on the **SAME** VDD input, so using the current board schem could **damage** the sensor_
 
 # Presure sensor and board
 ---------------------------------
