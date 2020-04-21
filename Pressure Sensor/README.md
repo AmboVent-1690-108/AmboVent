@@ -1,8 +1,8 @@
-General comments on the pressure sensor
-------------------------------------------------------------------
+## General comments on the pressure sensor
 
+Please note that this sensor requires 3.3V and pull up to signal on the **SAME** VDD input __
 
-Presure sensor and board
+# Presure sensor and board
 ---------------------------------
 
 We used the "SparkFun Pressure Sensor Breakout - MS5803-14BA"
