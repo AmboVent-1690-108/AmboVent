@@ -38,12 +38,13 @@ THE AMBOVENT GROUP FROM ISRAEL DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMI
 
 ## Software
 
-1. (Optional) Eclipse project for Arduino source code _editing_ (NOT building):
+1. (Required to build the code): [Arduino IDE](https://www.arduino.cc/en/Main/Software)
+1. (Optional: recommended to edit the code): Eclipse project for Arduino source code _editing_ (NOT building):
     1. A general setup PDF guide can be found in the [eRCaGuy_dotfiles](https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles) project [here](https://github.com/ElectricRCAircraftGuy/eRCaGuy_dotfiles/blob/master/eclipse/Eclipse%20setup%20instructions%20on%20a%20new%20Linux%20(or%20other%20OS)%20computer.pdf). See also:
     1. [3-Software/Arduino/readme.md](3-Software/Arduino/readme.md).
     1. [3-Software/Arduino/arduino_core/readme.md](3-Software/Arduino/arduino_core/readme.md)
     1. [3-Software/Arduino/.clang-format](3-Software/Arduino/.clang-format) - there are some nice descriptions & info in here on Eclipse & Sublime Text 3 editors, as well as setting your Arduino IDE to use 4 spaces instead of 2 for tabs.
-1. `clang-format` automatic code format tool. Please run this on any PR before submitting!
+1. (Required to get a pull request accepted which modifies the code): `clang-format` automatic code format tool. Please run this on any PR (GitHub Pull Request) before submitting a PR!
     1. Linux (tested--works): 
         1. Install: 
 
