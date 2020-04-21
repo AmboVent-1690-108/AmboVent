@@ -1,3 +1,5 @@
+<!-- Note that this is a markdown comment. It won't show up in your text. You don't have to delete
+these. -->
 ## Short description (1~4 lines):
 <!--- What problems does this solve? How? Use the longer details section below if needed. --->
 
