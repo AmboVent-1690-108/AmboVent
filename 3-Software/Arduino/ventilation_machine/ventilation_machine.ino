@@ -21,50 +21,85 @@ Use the Rate potentiometer to move the arm up/down.
 #include <math.h>
 #include <sdpsensor.h>
 #include "ArduinoUniqueID.h"
-#include <SoftwareSerial.h>
-// system configuration
-#define full_configuration \
-    1  // 1 is the default - full system.   0 is for partial system - potentiometer installed on
-       // pulley, no potentiometers, ...
-#define pressure_sensor_available 1  // 1 - you have installed an I2C pressure sensor
-#define central_monitor_system 0     // 1 - send unique ID for 10 seconds upon startup, 0 - dont
-#define FLOW_SENSOR_AVAILABLE true
 
-// options for display and debug via serial com
-#define send_to_monitor 1  // 1 = send data to monitor  0 = dont
-#define telemetry \
-    1  // 1 = send telemtry for debug  ... see end of code for optional telemetry data to send
-       // (uncomment selected lines)
+// System Configuration
 
-// UI
-#define deltaUD \
-    5  // define the value chnage per each button press for the non-potentiometer version only
-#define pot_alpha 0.85  // filter the pot values
+/// Set to true for "full system" (the default), or to false for "partial system"--potentiometer
+/// installed on pulley, no potentiometers... <---? TODO(@ElectricRCAircraftGuy): I request further
+/// explanation from @nimrod46--please update this description to be more clear.
+#define FULL_CONFIGURATION true
+/// Set to true if you have installed an I2C pressure sensor
+#define PRESSURE_SENSOR_AVAILABLE true
+/// Set to true to send unique ID for 10 seconds at startup, false otherwise
+#define CENTRAL_MONITOR_SYSTEM false
 
-// clinical
-#define perc_of_lower_volume 50.0  // % of max press - defines lower volume
-#define perc_of_lower_vol_display \
-    33.0  // % of max press - defines lower volume to display when reaching the real lower volume
-#define wait_time_after_resistance \
-    3  // seconds to wait before re-attempt to push air after max pressure was achieved
-#define max_pres_disconnected \
-    10  // if the max pressure during breathing cycle does not reach this value - pipe is
-        // disconnected
-#define insp_pressure_default \
-    40  // defualt value - hold this pressure while breathing - the value is changed if
-        // INSP_Pressure potentiometer is inatalled
-#define safety_pres_above_insp 10  // defines safety pressure as the inspirium pressure + this one
-#define safety_pressure 70         // quickly pullback arm when reaching this pressure in cm H2O
-#define speed_multiplier_reverse \
-    2  // factor of speeed for releasing the pressure (runs motion in reverse at X this speed
-#define motion_time_default 35  // motion time in 100 mSec 35 = 3500 mSec
-#define patient_triggered_breath_def \
-    1  // 1 = trigger new breath in case of patient inhale during the PEEP plateu
-#define delta_pres_patient_inhale 5  // in cmH2O
-#define alpha_pres 0.98              // used to average the pressure during the PEEP plateu
+// Options for display and debug via serial communication port
 
-#if (full_configuration == 0)  // no pot for UI, feedback pot on pulley
-#    define LCD_available 0
+/// Set to true to send data to the Serial Monitor, false otherwise
+#define SEND_TO_MONITOR true
+/// Set to true to send telemetry for debugging, false otherwise. See the end of this file for the
+/// optional telemetry data to send (comment/uncomment selected lines as desired)
+#define TELEMETRY false
+
+// User Interface (UI) settings
+
+/// Define the value change per button press, in percent, for the non-potentiometer version only
+#define DELTA_COMPRESSION_PERCENT 5
+/// IIR (Infinite Impulse Response) low-pass filter constant to filter the potentiometer values.
+/// This is a floating point value that must be >= 0 and < 1.0. Make closer to 1.0 to increase
+/// the strength of the low-pass filter, lowering the cutoff frequency and reducing the frequency
+/// response, and closer to 0 to have the opposite effect.
+#define POT_ALPHA 0.85
+
+// Clinical settings
+
+// TODO(@ElectricRCAircraftGuy): request help from @nimrod46: the pressure units are inconsistent!
+// I need your help please to straighten in out. The Sparkfun `MS5803::getPressure()` function in
+// "Libraries/SparkFun_MS5803-14BA_Breakout_Arduino_Library-master/src/SparkFun_MS5803_I2C.cpp" says
+// it returns values in units of Pascals, yet many comments here are referring to units of cm H2O.
+// 1 cm H2O = 98.0665 Pa.
+
+/// Percent of max pressure; defines the lower volume
+#define LOWER_VOLUME_PERCENT 50.0
+/// Percent of max pressure; defines the lower volume to display when reaching the real lower volume
+/// TODO(@ElectricRCAircraftGuy): I request further clarification from @nimrod46--please update
+/// this--why is this different from LOWER_VOLUME_PERCENT?
+#define LOWER_VOLUME_DISPLAY_PERCENT 33.0
+/// Seconds to wait before re-attempting to push air after max pressure has been achieved
+#define WAIT_TIME_AFTER_RESISTANCE_SEC 3
+/// If the max pressure (in Pascals) during the breathing cycle does not reach this value it means
+/// the pipe is disconnected
+#define PRESSURE_MAX_DISCONNECTED_PA 10
+/// Default inspiration (inhalation) pressure in Pascals; hold this pressure while breathing; the
+/// value is changed if the inspiration pressure potentiometer is installed
+#define PRESSURE_INSPIRATION_DEFAULT_PA 40
+/// Defines the safety pressure (maximum safe pressure) as the inspiration pressure + this pressure,
+/// in Pascals
+#define PRESSURE_SAFETY_ABOVE_INSPIRATION_PA 10
+/// Quickly pull back the arm when reaching this safety-critical pressure in cm H2O
+#define PRESSURE_SAFETY_CMH2O 70
+/// Speed multiplier for releasing the pressure (we will run the motion in reverse at a speed
+/// equal to the normal forward speed x this speed multiplier)
+#define SPEED_MULTIPLIER_REVERSE 2
+/// Motion time in 100 millisecond counts; 35 = 3500 ms
+#define MOTION_TIME_DEFAULT_100MS 35
+/// Set to true to trigger a new breath in case of patient inhale during the PEEP plateau;
+/// TODO(@ElectricRCAircraftGuy): what's a PEEP? Request clarity from @nimrod46--please fix this
+#define PATIENT_TRIGGERED_BREATH true
+/// TODO(@ElectricRCAircraftGuy): to @nimrod46: need help; units say cmH2O yet other units are
+/// Pascals. See my TODO comment above. Also, this parameter needs a description.
+#define PRESSURE_DELTA_PATIENT_INHALE_CMH2O 5
+/// IIR (Infinite Impulse Response) low-pass filter constant to filter the pressure readings
+/// during PEEP plateau.
+/// TODO(@ElectricRCAircraftGuy): need help from @nimrod46. What's a PEEP plateau? Please update
+/// this description.
+/// This is a floating point value that must be >= 0 and < 1.0. Make closer to 1.0 to increase
+/// the strength of the low-pass filter, lowering the cutoff frequency and reducing the frequency
+/// response, and closer to 0 to have the opposite effect.
+#define PRESSURE_ALPHA 0.98
+
+#if (FULL_CONFIGURATION == false)  // no pot for UI, feedback pot on pulley
+#    define LCD_available false
 #    define pres_pot_available \
         0              // 1 if the system has 3 potentiometer and can control the inspirium pressure
 #    define pin_SW2 7  // breath - On / Off / cal
@@ -77,8 +112,8 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_FU 5                 // freq Up
 #    define pin_AD 8                 // Amp Down
 #    define pin_AU 6                 // Amp Up
-#    define curr_sense 1             // 1- there is a curent sensor
-#    define control_with_pot 0       // 1 = control with potentiometers  0 = with push buttons
+#    define curr_sense true          // 1- there is a curent sensor
+#    define control_with_pot false   // 1 = control with potentiometers  0 = with push buttons
 #    define FF 0.6                   // motion control feed forward
 #    define KP 0.2                   // motion control propportional gain
 #    define KI 2                     // motion control integral gain
@@ -86,10 +121,10 @@ Use the Rate potentiometer to move the arm up/down.
 #    define f_reduction_up_val 0.65  // reduce feedforward by this factor when moving up
 #endif
 
-#if (full_configuration == 1)  // feedback pot on arm, potentiometers for UI
-#    define LCD_available 1
+#if (FULL_CONFIGURATION == true)  // feedback pot on arm, potentiometers for UI
+#    define LCD_available true
 #    define pres_pot_available \
-        1              // 1 if the system has 3 potentiometer and can control the inspirium pressure
+        true           // 1 if the system has 3 potentiometer and can control the inspirium pressure
 #    define pin_SW2 4  // breath - On / Off / cal
 #    define pin_TST 2  // test mode - not in use
 #    define pin_RST 5  // reset alarm - not in use
@@ -101,8 +136,8 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_FU 13                // freq Up - not used when you have potentiometers
 #    define pin_AD 13                // Amp Down - not used when you have potentiometers
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
-#    define curr_sense 0             // o no current sensor
-#    define control_with_pot 1       // 1 = control with potentiometers  0 = with push buttons
+#    define curr_sense false         // o no current sensor
+#    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
 #    define FF 4.5                   // motion control feed forward
 #    define KP 1.2                   // motion control propportional gain
 #    define KI 7                     // motion control integral gain
@@ -131,8 +166,8 @@ Use the Rate potentiometer to move the arm up/down.
 #define motion_control_allowed_error 30  // % of range
 
 // motor and sensor definitions
-#define invert_mot 1
-#define invert_pot 0
+#define invert_mot true
+#define invert_pot false
 
 //bluetooth pins and state
 #define BLE_enabled 1
@@ -142,7 +177,7 @@ Use the Rate potentiometer to move the arm up/down.
 Servo motor;
 LiquidCrystal_I2C lcd(0x27, 16,
                       2);  // Set the LCD address to 0x27 for a 16 chars and 2 line display
-#if (pressure_sensor_available == 1)
+#if (PRESSURE_SENSOR_AVAILABLE == 1)
 MS5803 sparkfumPress(ADDRESS_HIGH);
 #endif
 
@@ -159,7 +194,7 @@ SoftwareSerial BLESerial(pin_BLE_RX, pin_BLE_TX);
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
 // profile data:  press 125 points (50%) relase 125
 
-const PROGMEM byte pos[profile_length] = {
+const PROGMEM uint8_t pos[profile_length] = {
     0,   0,   1,   2,   4,   6,   8,   10,  13,  15,  18,  21,  25,  28,  31,  35,  38,  42,
     46,  50,  54,  57,  61,  66,  70,  74,  78,  82,  86,  91,  95,  99,  104, 108, 112, 117,
     121, 125, 130, 134, 138, 143, 147, 151, 156, 160, 164, 169, 173, 177, 181, 185, 189, 194,
@@ -174,7 +209,7 @@ const PROGMEM byte pos[profile_length] = {
     13,  12,  11,  10,  9,   8,   7,   6,   6,   5,   4,   3,   3,   2,   2,   1,   1,   1,
     0,   0,   0,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   2,   2,   2,
     1,   1,   1,   1,   1,   1,   1,   1,   1,   0,   0,   0,   0,   0,   0,   0};
-const PROGMEM byte vel[profile_length] = {
+const PROGMEM uint8_t vel[profile_length] = {
     129, 132, 134, 136, 137, 139, 140, 141, 142, 143, 143, 144, 144, 145, 146, 146, 146, 147,
     147, 147, 148, 148, 148, 148, 149, 149, 149, 149, 149, 149, 150, 150, 150, 150, 150, 150,
     150, 150, 150, 150, 150, 150, 150, 150, 150, 149, 149, 149, 149, 149, 149, 148, 148, 148,
@@ -197,14 +232,15 @@ const double AIR_P = 1.184;             // input (preset) for air at 1 atm press
 const double MIN_TO_SEC = 60;
 const double METER3_TO_LITER = 1000;
 
-byte FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST, LED_status,
-    USR_status, blueOn, calibrated = 0, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
-byte monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
-     disconnected = 0, high_pressure_detected = 0, motion_failure = 0, sent_LCD, hold_breath,
-     safety_pressure_detected;
-byte counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure, safety_pressure_counter,
-    no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
-byte patient_triggered_breath, motion_time, progress;
+uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST,
+    LED_status, USR_status, blueOn, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
+bool calibrated = false;
+uint8_t monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
+        disconnected = 0, high_pressure_detected = 0, motion_failure = 0, sent_LCD, hold_breath,
+        safety_pressure_detected;
+uint8_t counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure,
+    safety_pressure_counter, no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
+uint8_t patient_triggered_breath, motion_time, progress;
 int A_pot, prev_A_pot, A_current, Compression_perc = 80, prev_Compression_perc, A_rate, A_comp,
                                   A_pres;
 int motorPWM, index = 0, prev_index, i, wait_cycles, cycle_number, cycles_lost, index_last_motion;
@@ -226,7 +262,7 @@ double circle_area_A2;       // Circle area of A2 tube
 double Q_meter3_per_sec;     // Q (m^3/sec) volumetric flow rate
 double Q_liter_per_minutes;  // Q (L/min)
 
-enum main_states : byte
+enum main_states : uint8_t
 {
     STBY_STATE,
     BREATH_STATE,
@@ -262,7 +298,7 @@ void setup()
     BLESerial.write("AT+CHAR0xFFE1");
     BLESerial.write("AT+NAMEAmbovent");
 
-#if (pressure_sensor_available == 1)
+#if (PRESSURE_SENSOR_AVAILABLE == true)
     {
         sparkfumPress.reset();
         sparkfumPress.begin();
@@ -288,7 +324,7 @@ void setup()
         lcd.print("1690.108       ");
     }
 
-    if (central_monitor_system == 1)
+    if (CENTRAL_MONITOR_SYSTEM == 1)
     {
         for (i = 0; i < 100; i++)
         {
@@ -315,10 +351,10 @@ void setup()
     EEPROM.get(32, pres_pot_high);
     delay(20);
     if (min_arm_pos >= 0 && min_arm_pos < 1024 && max_arm_pos >= 0 && max_arm_pos < 1024)
-        calibrated = 1;
-    insp_pressure = insp_pressure_default;
-    patient_triggered_breath = patient_triggered_breath_def;
-    motion_time = motion_time_default;
+        calibrated = true;
+    insp_pressure = PRESSURE_INSPIRATION_DEFAULT_PA;
+    patient_triggered_breath = PATIENT_TRIGGERED_BREATH;
+    motion_time = MOTION_TIME_DEFAULT_100MS;
     lcd.backlight();  // Turn on the blacklight and print a message.
 }
 
@@ -329,7 +365,7 @@ void loop()
     {
     case STBY_STATE:  // standby
         standby_func();
-        if (SW2_pressed && calibrated == 1)  // start breathing motion
+        if (SW2_pressed && calibrated)  // start breathing motion
         {
             state = BREATH_STATE;
             initialize_breath();
@@ -361,9 +397,9 @@ void loop()
 
     if (millis() - last_sent_data > 20)
     {
-        if (send_to_monitor == 1 && telemetry == 0)
+        if (SEND_TO_MONITOR && !TELEMETRY)
             send_data_to_monitor();
-        if (telemetry == 1)
+        if (TELEMETRY)
             print_tele();
         last_sent_data = millis();
     }
@@ -497,14 +533,14 @@ void run_profile_func()
             motion_failure = 1;
 
         if (safety_pressure_detected)
-            index -= speed_multiplier_reverse
+            index -= SPEED_MULTIPLIER_REVERSE
                      * (1 + cycles_lost);  // run in reverse if high pressure was detected
         if (index < 0)
         {
             if (safety_pressure_detected == 1)
                 safety_pressure_counter += 1;  // count the number of cases reaching safety pressure
             safety_pressure_detected = 0;
-            wait_cycles = 100 * wait_time_after_resistance;
+            wait_cycles = 100 * WAIT_TIME_AFTER_RESISTANCE_SEC;
             index = profile_length - 2;  // set index to the point of waiting
         }                                // stop the reverse when reching the cycle start point
 
@@ -515,12 +551,12 @@ void run_profile_func()
         {
             if (in_wait == 1 || (index > profile_length / 2 && (A_pot < min_arm_pos + range / 18)))
             {
-                if (avg_pres - pressure_abs > delta_pres_patient_inhale)
+                if (avg_pres - pressure_abs > PRESSURE_DELTA_PATIENT_INHALE_CMH2O)
                     start_new_cycle();  // start new breath cycle if patient tries to inhale durint
                                         // the PEEP plateu
-                avg_pres =
-                    avg_pres * alpha_pres
-                    + (1 - alpha_pres) * float(pressure_abs);  // calculate the filtered pressure
+                avg_pres = avg_pres * PRESSURE_ALPHA
+                           + (1 - PRESSURE_ALPHA)
+                                 * float(pressure_abs);  // calculate the filtered pressure
             }
             else
             {
@@ -553,7 +589,7 @@ void run_profile_func()
 
 void calculate_wanted_pos_vel()
 {
-    byte pos_from_profile, vel_from_profile;
+    uint8_t pos_from_profile, vel_from_profile;
     pos_from_profile = pgm_read_byte_near(pos + index);
     vel_from_profile = pgm_read_byte_near(vel + index + 1);
 
@@ -572,7 +608,7 @@ void calculate_wanted_pos_vel()
         wanted_pos = float(A_pot);  // hold current position
     }
     if (safety_pressure_detected)
-        planned_vel = -speed_multiplier_reverse
+        planned_vel = -SPEED_MULTIPLIER_REVERSE
                       * planned_vel;  // to do the revese in case high pressure detected
     prev_error = error;
     error = wanted_pos - float(A_pot);
@@ -717,7 +753,7 @@ void blink_user_led()
 
 void calc_failure()
 {
-    if (prev_max_pressure < max_pres_disconnected && cycle_number > 2)
+    if (prev_max_pressure < PRESSURE_MAX_DISCONNECTED_PA && cycle_number > 2)
         disconnected = 1;
     else
         disconnected = 0;  // tube was disconnected
@@ -727,9 +763,10 @@ void calc_failure()
         hold_breath = 1;
         index_to_hold_breath = index;
     }  // high pressure detected
-    if (pressure_abs > safety_pressure && profile_planned_vel > 0)
+    if (pressure_abs > PRESSURE_SAFETY_CMH2O && profile_planned_vel > 0)
         safety_pressure_detected = 1;
-    if (pressure_abs > insp_pressure + safety_pres_above_insp && profile_planned_vel > 0)
+    if (pressure_abs > insp_pressure + PRESSURE_SAFETY_ABOVE_INSPIRATION_PA
+        && profile_planned_vel > 0)
         safety_pressure_detected = 1;
     if (index == 0 && prev_index != 0 && failure == 0 && safety_pressure_detected == 0)
         no_fail_counter += 1;
@@ -818,7 +855,7 @@ void calibrate_arm_range()  // used for calibaration of motion range
     delay(200);
     EEPROM.put(8, max_arm_pos);
     delay(200);
-    calibrated = 1;
+    calibrated = true;
 }
 
 void internal_arm_calib_step()
@@ -875,9 +912,9 @@ void display_LCD()  // here function that sends data to LCD
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("BPM:");
-            lcd.print(byte(BPM));
+            lcd.print((uint8_t)BPM);
             lcd.print("  Dep:");
-            lcd.print(byte(Compression_perc));
+            lcd.print((uint8_t)Compression_perc);
             lcd.print("%");
             lcd.setCursor(0, 1);
             if (failure == 0)
@@ -886,14 +923,14 @@ void display_LCD()  // here function that sends data to LCD
                 {
                     lcd.setCursor(0, 1);
                     lcd.print("Insp. Press. :");
-                    lcd.print(byte(insp_pressure));
+                    lcd.print((uint8_t)insp_pressure);
                 }
                 else
                 {
                     lcd.print("Pmin:");
-                    lcd.print(byte(prev_min_pressure));
+                    lcd.print((uint8_t)prev_min_pressure);
                     lcd.print("  Pmax:");
-                    lcd.print(byte(prev_max_pressure));
+                    lcd.print((uint8_t)prev_max_pressure);
                 }
             }
             if (failure == 1)
@@ -1055,24 +1092,24 @@ void read_IO()
         A_comp = analogRead(pin_AMP);
         A_pres = analogRead(pin_PRE);
         if (abs(pot_rate - A_rate) < 5)
-            pot_rate = pot_alpha * pot_rate + (1 - pot_alpha) * A_rate;
+            pot_rate = POT_ALPHA * pot_rate + (1 - POT_ALPHA) * A_rate;
         else
             pot_rate = A_rate;
         if (abs(pot_comp - A_comp) < 5)
-            pot_comp = pot_alpha * pot_comp + (1 - pot_alpha) * A_comp;
+            pot_comp = POT_ALPHA * pot_comp + (1 - POT_ALPHA) * A_comp;
         else
             pot_comp = A_comp;
         if (abs(pot_pres - A_pres) < 5)
-            pot_pres = pot_alpha * pot_pres + (1 - pot_alpha) * A_pres;
+            pot_pres = POT_ALPHA * pot_pres + (1 - POT_ALPHA) * A_pres;
         else
             pot_pres = A_pres;
         A_comp = range_pot(int(pot_comp), comp_pot_low, comp_pot_high);
         A_rate = range_pot(int(pot_rate), rate_pot_low, rate_pot_high);
         A_pres = range_pot(int(pot_pres), pres_pot_low, pres_pot_high);
 
-        Compression_perc = perc_of_lower_vol_display
-                           + int(float(A_comp) * (100 - perc_of_lower_vol_display) / 1023);
-        Compression_perc = constrain(Compression_perc, perc_of_lower_vol_display, 100);
+        Compression_perc = LOWER_VOLUME_DISPLAY_PERCENT
+                           + int(float(A_comp) * (100 - LOWER_VOLUME_DISPLAY_PERCENT) / 1023);
+        Compression_perc = constrain(Compression_perc, LOWER_VOLUME_DISPLAY_PERCENT, 100);
 
         BPM = 6 + (A_rate - 23) / 55;           // 0 is 6 breaths per minute, 1023 is 24 BPM
         breath_cycle_time = 60000 / BPM + 100;  // in milisec
@@ -1111,13 +1148,13 @@ void read_IO()
             breath_cycle_time = 60000 / BPM + 100;
             if (AD == 0 && prev_AD == 1)
             {
-                Compression_perc -= deltaUD;
-                if (Compression_perc < perc_of_lower_vol_display)
-                    Compression_perc = perc_of_lower_vol_display;
+                Compression_perc -= DELTA_COMPRESSION_PERCENT;
+                if (Compression_perc < LOWER_VOLUME_DISPLAY_PERCENT)
+                    Compression_perc = LOWER_VOLUME_DISPLAY_PERCENT;
             }
             if (AU == 0 && prev_AU == 1)
             {
-                Compression_perc += deltaUD;
+                Compression_perc += DELTA_COMPRESSION_PERCENT;
                 if (Compression_perc > 100)
                     Compression_perc = 100;
             }
@@ -1152,9 +1189,9 @@ void read_IO()
     }
     if (is_starting_respiration())
     {
-        range_factor = perc_of_lower_volume
-                       + (Compression_perc - perc_of_lower_vol_display)
-                             * (100 - perc_of_lower_volume) / (100 - perc_of_lower_vol_display);
+        range_factor = LOWER_VOLUME_PERCENT
+                       + (Compression_perc - LOWER_VOLUME_DISPLAY_PERCENT)
+                             * (100 - LOWER_VOLUME_PERCENT) / (100 - LOWER_VOLUME_DISPLAY_PERCENT);
         range_factor = range_factor / 100;
         if (range_factor > 1)
             range_factor = 1;
@@ -1165,7 +1202,7 @@ void read_IO()
     if (millis() - last_read_pres > 100)
     {
         last_read_pres = millis();
-#if (pressure_sensor_available == 1)
+#if (PRESSURE_SENSOR_AVAILABLE == 1)
         {
             pressure_abs = int(sparkfumPress.getPressure(ADC_4096) - pressure_baseline);  // mbar
             if (pressure_abs < 0)
@@ -1220,41 +1257,41 @@ void send_data_to_monitor()
     BLESerial.write("A");
     }
   if (monitor_index==1) {
-    Serial.println(byte(BPM));
-    sprintf(strFloat,"-D%d",(int)BPM);
+    Serial.println((uint8_t)BPM);
+    sprintf(strFloat,"-D%d",(uint8_t)BPM);
     BLESerial.write(strFloat);
     }
   if (monitor_index==2) {
-    Serial.println(byte(Compression_perc));
-    sprintf(strFloat,"-D%d",(int)Compression_perc);
+    Serial.println((uint8_t)Compression_perc);
+    sprintf(strFloat,"-D%d",(uint8_t)Compression_perc);
     BLESerial.write(strFloat);
     }
   if (monitor_index==3) {
-    Serial.println(byte(pressure_abs));
-    sprintf(strFloat,"-D%d",(int)pressure_abs);
+    Serial.println((uint8_t)pressure_abs);
+    sprintf(strFloat,"-D%d",(uint8_t)pressure_abs);
     BLESerial.write(strFloat);
     }
   if (monitor_index==4) {
-    Serial.println(byte(failure));
-    sprintf(strFloat,"-D%d",(int)failure);
+    Serial.println((uint8_t)failure);
+    sprintf(strFloat,"-D%d",(uint8_t)failure);
     BLESerial.write(strFloat);
     }
   if (monitor_index==5)
   {
     if (send_beep)
     {
-      Serial.println(byte(1));
+      Serial.println((uint8_t)1);
       BLESerial.write("-D1");
       send_beep=0;
     }
     else {
-      Serial.println(byte(0));
+      Serial.println((uint8_t)0);
       BLESerial.write("-D0");
     }
   }
   if (monitor_index==6){
-    Serial.println(byte(insp_pressure));
-    sprintf(strFloat,"-D%d",(int)insp_pressure);
+    Serial.println((uint8_t)insp_pressure);
+    sprintf(strFloat,"-D%d",(uint8_t)insp_pressure);
     BLESerial.write(strFloat);
   }
   
@@ -1263,22 +1300,22 @@ void send_data_to_monitor()
   if (monitor_index==7) monitor_index=0;
 }
 
-void LED_FREQ(byte val)
+void LED_FREQ(uint8_t val)
 {
     digitalWrite(pin_LED_FREQ, val);
 }
 
-void LED_AMP(byte val)
+void LED_AMP(uint8_t val)
 {
     digitalWrite(pin_LED_AMP, val);
 }
 
-void LED_FAIL(byte val)
+void LED_FAIL(uint8_t val)
 {
     digitalWrite(pin_LED_Fail, val);
 }
 
-void LED_USR(byte val)
+void LED_USR(uint8_t val)
 {
     digitalWrite(pin_USR, val);
 }
