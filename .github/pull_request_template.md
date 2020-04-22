@@ -18,6 +18,9 @@ merge until you have completed all items. -->
 [README.md](https://github.com/AmboVent-1690-108/AmboVent#software) for details on how)
 - [ ] I have built the code in the Arduino IDE (or with the command-line tool) and pasted the 
 build output below
+- [ ] If I have touched *any* lines of code in the software, other than comments, I have incremented
+the version number string at the top of "ventilation_machine.ino" and updated the Software Changelog
+in the main AmboVent readme.
 
 **Arduino IDE build output:**  
 

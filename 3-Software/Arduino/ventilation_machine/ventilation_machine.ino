@@ -20,6 +20,11 @@ Use the Rate potentiometer to move the arm up/down.
 #include <Wire.h>
 #include "ArduinoUniqueID.h"
 
+/// Version string: be sure to update this version number EVERY time you make any code change,
+/// period, which isn't just a comment change! Document it in the Software Changelog in the main
+/// AmboVent readme.
+#define VERSION_STR "v0.1.0"
+
 // System Configuration
 
 /// Set to true for "full system" (the default), or to false for "partial system"--potentiometer
@@ -96,34 +101,11 @@ Use the Rate potentiometer to move the arm up/down.
 /// response, and closer to 0 to have the opposite effect.
 #define PRESSURE_ALPHA 0.98
 
-#if (FULL_CONFIGURATION == false)  // no pot for UI, feedback pot on pulley
-#    define LCD_available false
-#    define pres_pot_available \
-        0              // 1 if the system has 3 potentiometer and can control the inspirium pressure
-#    define pin_SW2 7  // breath - On / Off / cal
-#    define pin_TST 2  // test mode - not in use
-#    define pin_LED_AMP 11           // amplitude LED
-#    define pin_LED_FREQ 9           // frequency LED
-#    define pin_LED_Fail 10          // FAIL and calib blue LED
-#    define pin_USR 12               // User LED
-#    define pin_FD 4                 // freq Down
-#    define pin_FU 5                 // freq Up
-#    define pin_AD 8                 // Amp Down
-#    define pin_AU 6                 // Amp Up
-#    define curr_sense true          // 1- there is a curent sensor
-#    define control_with_pot false   // 1 = control with potentiometers  0 = with push buttons
-#    define FF 0.6                   // motion control feed forward
-#    define KP 0.2                   // motion control propportional gain
-#    define KI 2                     // motion control integral gain
-#    define integral_limit 6         // limits the integral of error
-#    define f_reduction_up_val 0.65  // reduce feedforward by this factor when moving up
-#endif
-
-#if (FULL_CONFIGURATION == true)  // feedback pot on arm, potentiometers for UI
-#    define LCD_available true
-#    define pres_pot_available \
-        true           // 1 if the system has 3 potentiometer and can control the inspirium pressure
-#    define pin_SW2 4  // breath - On / Off / cal
+// Full configuration: feedback pot on arm, potentiometers for User Interface.
+// The system has 3 potentiometers and can control the inspiration (inhalation) pressure.
+#if FULL_CONFIGURATION == true
+#    define LCD_AVAILABLE true
+#    define PIN_SW2 4  // breath - On / Off / cal
 #    define pin_TST 2  // test mode - not in use
 #    define pin_RST 5  // reset alarm - not in use
 #    define pin_LED_AMP 13           // amplitude LED
@@ -141,6 +123,27 @@ Use the Rate potentiometer to move the arm up/down.
 #    define KI 7                     // motion control integral gain
 #    define integral_limit 5         // limits the integral of error
 #    define f_reduction_up_val 0.85  // reduce feedforward by this factor when moving up
+#else
+// FULL_CONFIGURATION == false: no potentiometers for User Interface, feedback pot on pulley.
+// The system can NOT control the inspiration (inhalation) pressure.
+#    define LCD_AVAILABLE false
+#    define PIN_SW2 7  // breath - On / Off / cal
+#    define pin_TST 2  // test mode - not in use
+#    define pin_LED_AMP 11           // amplitude LED
+#    define pin_LED_FREQ 9           // frequency LED
+#    define pin_LED_Fail 10          // FAIL and calib blue LED
+#    define pin_USR 12               // User LED
+#    define pin_FD 4                 // freq Down
+#    define pin_FU 5                 // freq Up
+#    define pin_AD 8                 // Amp Down
+#    define pin_AU 6                 // Amp Up
+#    define curr_sense true          // 1- there is a curent sensor
+#    define control_with_pot false   // 1 = control with potentiometers  0 = with push buttons
+#    define FF 0.6                   // motion control feed forward
+#    define KP 0.2                   // motion control propportional gain
+#    define KI 2                     // motion control integral gain
+#    define integral_limit 6         // limits the integral of error
+#    define f_reduction_up_val 0.65  // reduce feedforward by this factor when moving up
 #endif
 
 // other Arduino pins alocation
@@ -168,9 +171,10 @@ Use the Rate potentiometer to move the arm up/down.
 #define invert_pot false
 
 Servo motor;
-LiquidCrystal_I2C lcd(0x27, 16,
-                      2);  // Set the LCD address to 0x27 for a 16 chars and 2 line display
-#if (PRESSURE_SENSOR_AVAILABLE == 1)
+// Set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27, 16, 2);  
+
+#if PRESSURE_SENSOR_AVAILABLE == true
 MS5803 sparkfumPress(ADDRESS_HIGH);
 #endif
 
@@ -179,7 +183,7 @@ MS5803 sparkfumPress(ADDRESS_HIGH);
 // vel int 0...255  ZERO is at 128 , units: pos change per 0.2 sec
 // profile data:  press 125 points (50%) relase 125
 
-const PROGMEM uint8_t pos[profile_length] = {
+constexpr PROGMEM uint8_t pos[profile_length] = {
     0,   0,   1,   2,   4,   6,   8,   10,  13,  15,  18,  21,  25,  28,  31,  35,  38,  42,
     46,  50,  54,  57,  61,  66,  70,  74,  78,  82,  86,  91,  95,  99,  104, 108, 112, 117,
     121, 125, 130, 134, 138, 143, 147, 151, 156, 160, 164, 169, 173, 177, 181, 185, 189, 194,
@@ -194,7 +198,7 @@ const PROGMEM uint8_t pos[profile_length] = {
     13,  12,  11,  10,  9,   8,   7,   6,   6,   5,   4,   3,   3,   2,   2,   1,   1,   1,
     0,   0,   0,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   2,   2,   2,
     1,   1,   1,   1,   1,   1,   1,   1,   1,   0,   0,   0,   0,   0,   0,   0};
-const PROGMEM uint8_t vel[profile_length] = {
+constexpr PROGMEM uint8_t vel[profile_length] = {
     129, 132, 134, 136, 137, 139, 140, 141, 142, 143, 143, 144, 144, 145, 146, 146, 146, 147,
     147, 147, 148, 148, 148, 148, 149, 149, 149, 149, 149, 149, 150, 150, 150, 150, 150, 150,
     150, 150, 150, 150, 150, 150, 150, 150, 150, 149, 149, 149, 149, 149, 149, 148, 148, 148,
@@ -210,28 +214,126 @@ const PROGMEM uint8_t vel[profile_length] = {
     126, 127, 127, 127, 127, 127, 127, 127, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 129, 129, 129, 129, 129, 129, 129, 129, 129, 128, 128, 128, 128, 128};
 
-uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST,
-    LED_status, USR_status, blueOn, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
+// TODO(ElectricRCAircraftGuy): global variables are bad. Meticulously go through every single
+// one of these and move them into their appropriate scope. Also check their types, const-ness,
+// and initial values. Need to see if they are even all used too. Before doing that, let's get
+// clang-tidy working as a linter, as it can help identify that, and fix all compiler warnings,
+// since some of those may catch this too.
+
+uint8_t FD;
+uint8_t FU;
+uint8_t AD;
+uint8_t AU;
+uint8_t prev_FD;
+uint8_t prev_FU;
+uint8_t prev_AD;
+uint8_t prev_AU;
+uint8_t SW2;
+uint8_t prev_SW2;
+uint8_t prev_TST;
+uint8_t RST;
+uint8_t LED_status;
+uint8_t USR_status;
+uint8_t blueOn;
+uint8_t calibON;
+uint8_t numBlinkFreq;
+uint8_t SW2_pressed;
+uint8_t TST_pressed;
+uint8_t menu_state;
+
 bool calibrated = false;
-uint8_t monitor_index = 0, BPM = 14, prev_BPM, in_wait, failure, send_beep, wanted_cycle_time,
-        disconnected = 0, high_pressure_detected = 0, motion_failure = 0, sent_LCD, hold_breath,
-        safety_pressure_detected;
-uint8_t counter_ON, counter_OFF, SW2temp, insp_pressure, prev_insp_pressure,
-    safety_pressure_counter, no_fail_counter, TST, counter_TST_OFF, counter_TST_ON, TSTtemp;
-uint8_t patient_triggered_breath, motion_time, progress;
-int A_pot, prev_A_pot, A_current, Compression_perc = 80, prev_Compression_perc, A_rate, A_comp,
-                                  A_pres;
-int motorPWM, index = 0, prev_index, i, wait_cycles, cycle_number, cycles_lost, index_last_motion;
-int pressure_abs, breath_cycle_time, max_pressure = 0, prev_max_pressure = 0, min_pressure = 100,
-                                     prev_min_pressure = 0, index_to_hold_breath, pressure_baseline;
-int comp_pot_low = 0, comp_pot_high = 1023, rate_pot_low = 0, rate_pot_high = 1023,
-    pres_pot_low = 0, pres_pot_high = 1023;
-unsigned int max_arm_pos, min_arm_pos;
-unsigned long lastSent, lastIndex, lastUSRblink, last_TST_not_pressed, lastBlue, start_wait,
-    last_sent_data, last_read_pres, start_disp_pres;
-float pot_rate, pot_pres, pot_comp, avg_pres;
-float wanted_pos, wanted_vel_PWM, range, range_factor, profile_planned_vel, planned_vel, integral,
-    error, prev_error, f_reduction_up;
+
+uint8_t monitor_index = 0;
+uint8_t BPM = 14;
+uint8_t prev_BPM;
+uint8_t in_wait;
+uint8_t failure;
+uint8_t send_beep;
+uint8_t wanted_cycle_time;
+uint8_t disconnected = 0;
+uint8_t high_pressure_detected = 0;
+uint8_t motion_failure = 0;
+uint8_t sent_LCD, hold_breath;
+uint8_t safety_pressure_detected;
+
+uint8_t counter_ON;
+uint8_t counter_OFF;
+uint8_t SW2temp;
+uint8_t insp_pressure;
+uint8_t prev_insp_pressure;
+uint8_t safety_pressure_counter;
+uint8_t no_fail_counter;
+uint8_t TST;
+uint8_t counter_TST_OFF;
+uint8_t counter_TST_ON;
+uint8_t TSTtemp;
+
+uint8_t patient_triggered_breath;
+uint8_t motion_time;
+uint8_t progress;
+
+int A_pot;
+int prev_A_pot;
+int A_current;
+int Compression_perc = 80;
+int prev_Compression_perc;
+int A_rate;
+int A_comp;
+int A_pres;
+
+int motorPWM;
+int index = 0;
+int prev_index;
+int i;
+int wait_cycles;
+int cycle_number;
+int cycles_lost;
+int index_last_motion;
+
+int pressure_abs;
+int breath_cycle_time;
+int max_pressure = 0;
+int prev_max_pressure = 0;
+int min_pressure = 100;
+int prev_min_pressure = 0;
+int index_to_hold_breath;
+int pressure_baseline;
+
+int comp_pot_low = 0;
+int comp_pot_high = 1023;
+int rate_pot_low = 0;
+int rate_pot_high = 1023;
+int pres_pot_low = 0;
+int pres_pot_high = 1023;
+
+uint16_t max_arm_pos;
+uint16_t min_arm_pos;
+
+uint32_t lastSent;
+uint32_t lastIndex;
+uint32_t lastUSRblink;
+uint32_t last_TST_not_pressed;
+uint32_t lastBlue;
+uint32_t start_wait;
+uint32_t last_sent_data;
+uint32_t last_read_pres;
+uint32_t start_disp_pres;
+
+float pot_rate;
+float pot_pres;
+float pot_comp;
+float avg_pres;
+
+float wanted_pos;
+float wanted_vel_PWM;
+float range;
+float range_factor;
+float profile_planned_vel;
+float planned_vel;
+float integral;
+float error;
+float prev_error;
+float f_reduction_up;
 
 enum main_states : uint8_t
 {
@@ -241,6 +343,11 @@ enum main_states : uint8_t
 };
 enum main_states state;
 
+/// @brief      Run once at startup
+/// @note       This is called in `main()` in 
+///             "AmboVent/3-Software/Arduino/arduino_core/arduino/hardware/arduino/avr/cores/arduino/main.cpp
+/// @param      None
+/// @return     None
 void setup()
 {
     pinMode(pin_PWM, OUTPUT);
@@ -248,42 +355,46 @@ void setup()
     pinMode(pin_FU, INPUT_PULLUP);
     pinMode(pin_AD, INPUT_PULLUP);
     pinMode(pin_AU, INPUT_PULLUP);
-    pinMode(pin_SW2, INPUT_PULLUP);
+    pinMode(PIN_SW2, INPUT_PULLUP);
     pinMode(pin_TST, INPUT_PULLUP);
     pinMode(pin_LED_AMP, OUTPUT);
     pinMode(pin_LED_FREQ, OUTPUT);
     pinMode(pin_LED_Fail, OUTPUT);
     pinMode(pin_USR, OUTPUT);
     motor.attach(pin_PWM);
+
     Serial.begin(115200);
+    Serial.print("\nAmboVent Version: ");
+    Serial.println(VERSION_STR);
+    Serial.println();
+
     Wire.begin();
 
-#if (PRESSURE_SENSOR_AVAILABLE == true)
-    {
-        sparkfumPress.reset();
-        sparkfumPress.begin();
-        pressure_baseline = int(sparkfumPress.getPressure(ADC_4096));
-    }
+#if PRESSURE_SENSOR_AVAILABLE == true
+    sparkfumPress.reset();
+    sparkfumPress.begin();
+    pressure_baseline = int(sparkfumPress.getPressure(ADC_4096));
 #endif
 
-    if (LCD_available)
+    if (LCD_AVAILABLE)
     {
         lcd.begin();      // initialize the LCD
         lcd.backlight();  // Turn on the blacklight and print a message.
         lcd.setCursor(0, 0);
+        // TODO(ElectricRCAircraftGuy): need to print the version number on the LCD at startup too
         lcd.print("AmvoVent       ");
         lcd.setCursor(0, 1);
         lcd.print("1690.108       ");
     }
 
-    if (CENTRAL_MONITOR_SYSTEM == 1)
+#if CENTRAL_MONITOR_SYSTEM == true
+    // for IAI monitor run for 100 cycles
+    for (i = 0; i < 100; i++)
     {
-        for (i = 0; i < 100; i++)
-        {
-            UniqueIDdump(Serial);
-            delay(100);
-        }  // for IAI monitor run for 100 cycles
+        UniqueIDdump(Serial);
+        delay(100);
     }
+#endif
 
     state = STBY_STATE;
     EEPROM.get(4, min_arm_pos);
@@ -310,6 +421,11 @@ void setup()
     lcd.backlight();  // Turn on the blacklight and print a message.
 }
 
+/// @brief      Run repeatedly after setup()
+/// @note       This is called in `main()` in 
+///             "AmboVent/3-Software/Arduino/arduino_core/arduino/hardware/arduino/avr/cores/arduino/main.cpp
+/// @param      None
+/// @return     None
 void loop()
 {
     read_IO();
@@ -857,7 +973,7 @@ void calibrate_pot_range()  // used for calibaration of potentiometers
 
 void display_LCD()  // here function that sends data to LCD
 {
-    if (LCD_available)
+    if (LCD_AVAILABLE)
     {
         if (calibON == 0 && state != MENU_STATE)
         {
@@ -978,7 +1094,7 @@ void read_IO()
 
     RST = (1 - digitalRead(pin_RST));
     TSTtemp = (1 - digitalRead(pin_TST));
-    SW2temp = (1 - digitalRead(pin_SW2));
+    SW2temp = (1 - digitalRead(PIN_SW2));
 
     if (SW2temp == 1)
     {
