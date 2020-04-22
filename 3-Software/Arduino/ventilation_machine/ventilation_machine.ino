@@ -111,9 +111,9 @@ Use the Rate potentiometer to move the arm up/down.
 // The system has 3 potentiometers and can control the inspiration (inhalation) pressure.
 #if FULL_CONFIGURATION == true
 #    define LCD_AVAILABLE true
-#    define PIN_SW2 4  // breath - On / Off / cal
-#    define pin_TST 2  // test mode - not in use
-#    define pin_RST 5  // reset alarm - not in use
+#    define PIN_SW2 4                // breath - On / Off / cal
+#    define pin_TST 2                // test mode - not in use
+#    define pin_RST 5                // reset alarm - not in use
 #    define pin_LED_AMP 13           // amplitude LED
 #    define pin_LED_FREQ 13          // frequency LED
 #    define pin_LED_Fail 10          // FAIL and calib blue LED
@@ -133,8 +133,8 @@ Use the Rate potentiometer to move the arm up/down.
 // FULL_CONFIGURATION == false: no potentiometers for User Interface, feedback pot on pulley.
 // The system can NOT control the inspiration (inhalation) pressure.
 #    define LCD_AVAILABLE false
-#    define PIN_SW2 7  // breath - On / Off / cal
-#    define pin_TST 2  // test mode - not in use
+#    define PIN_SW2 7                // breath - On / Off / cal
+#    define pin_TST 2                // test mode - not in use
 #    define pin_LED_AMP 11           // amplitude LED
 #    define pin_LED_FREQ 9           // frequency LED
 #    define pin_LED_Fail 10          // FAIL and calib blue LED
@@ -178,7 +178,7 @@ Use the Rate potentiometer to move the arm up/down.
 
 Servo motor;
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
-LiquidCrystal_I2C lcd(0x27, 16, 2);  
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 #if PRESSURE_SENSOR_AVAILABLE == true
 MS5803 sparkfumPress(ADDRESS_HIGH);
@@ -350,7 +350,7 @@ enum main_states : uint8_t
 enum main_states state;
 
 /// @brief      Run once at startup
-/// @note       This is called in `main()` in 
+/// @note       This is called in `main()` in
 ///             "AmboVent/3-Software/Arduino/arduino_core/arduino/hardware/arduino/avr/cores/arduino/main.cpp
 /// @param      None
 /// @return     None
@@ -428,7 +428,7 @@ void setup()
 }
 
 /// @brief      Run repeatedly after setup()
-/// @note       This is called in `main()` in 
+/// @note       This is called in `main()` in
 ///             "AmboVent/3-Software/Arduino/arduino_core/arduino/hardware/arduino/avr/cores/arduino/main.cpp
 /// @param      None
 /// @return     None
