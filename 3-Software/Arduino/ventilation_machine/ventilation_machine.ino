@@ -25,6 +25,12 @@ Use the Rate potentiometer to move the arm up/down.
 /// AmboVent readme.
 #define VERSION_STR "v0.1.0"
 
+// TODO(ElectricRCAircraftGuy): get rid of nearly every single one of these #defines! They should
+// be `constexpr` variables instead, with the sole exception of ones which are used for variable
+// compilation, such as those which exclude certain portions of code based on hardware
+// configuration. (Even this may not be true though, as using bool may still allow the compiler
+// to optimize out those sections. Do some compilation testing when you get to it).
+
 // System Configuration
 
 /// Set to true for "full system" (the default), or to false for "partial system"--potentiometer
@@ -272,39 +278,39 @@ uint8_t patient_triggered_breath;
 uint8_t motion_time;
 uint8_t progress;
 
-int A_pot;
-int prev_A_pot;
-int A_current;
-int Compression_perc = 80;
-int prev_Compression_perc;
-int A_rate;
-int A_comp;
-int A_pres;
+int16_t A_pot;
+int16_t prev_A_pot;
+int16_t A_current;
+int16_t Compression_perc = 80;
+int16_t prev_Compression_perc;
+int16_t A_rate;
+int16_t A_comp;
+int16_t A_pres;
 
-int motorPWM;
-int index = 0;
-int prev_index;
-int i;
-int wait_cycles;
-int cycle_number;
-int cycles_lost;
-int index_last_motion;
+int16_t motorPWM;
+int16_t index = 0;
+int16_t prev_index;
+int16_t i;
+int16_t wait_cycles;
+int16_t cycle_number;
+int16_t cycles_lost;
+int16_t index_last_motion;
 
-int pressure_abs;
-int breath_cycle_time;
-int max_pressure = 0;
-int prev_max_pressure = 0;
-int min_pressure = 100;
-int prev_min_pressure = 0;
-int index_to_hold_breath;
-int pressure_baseline;
+int16_t pressure_abs;
+int16_t breath_cycle_time;
+int16_t max_pressure = 0;
+int16_t prev_max_pressure = 0;
+int16_t min_pressure = 100;
+int16_t prev_min_pressure = 0;
+int16_t index_to_hold_breath;
+int16_t pressure_baseline;
 
-int comp_pot_low = 0;
-int comp_pot_high = 1023;
-int rate_pot_low = 0;
-int rate_pot_high = 1023;
-int pres_pot_low = 0;
-int pres_pot_high = 1023;
+int16_t comp_pot_low = 0;
+int16_t comp_pot_high = 1023;
+int16_t rate_pot_low = 0;
+int16_t rate_pot_high = 1023;
+int16_t pres_pot_low = 0;
+int16_t pres_pot_high = 1023;
 
 uint16_t max_arm_pos;
 uint16_t min_arm_pos;
