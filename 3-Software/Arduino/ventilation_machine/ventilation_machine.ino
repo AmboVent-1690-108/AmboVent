@@ -293,13 +293,19 @@ void setup()
     Wire.begin();
 
     //Bluetooth startup
-    BLESerial.begin(9600);
-    delay(100);
-    BLESerial.write("AT");
-    BLESerial.write("AT+ROLE0");
-    BLESerial.write("AT+UUID0xFFE0");
-    BLESerial.write("AT+CHAR0xFFE1");
-    BLESerial.write("AT+NAMEAmbovent");
+    #if (BLE_enabled)
+      BLESerial.begin(9600);
+      delay(100);
+      BLESerial.write("AT");
+      BLESerial.write("AT+ROLE0");
+      BLESerial.write("AT+UUID0xFFE0");
+      BLESerial.write("AT+CHAR0xFFE1");
+      BLESerial.write("AT+NAMEAmbovent");
+      //BLESerial.write("AT+BAUD=115200,0,0");
+      //BLESerial.write("AT+POLAR=1,0");
+      //AT+BAUD=115200,0,0 : Change baud rate to 115200 (Arduino Uno, Bluino and Mega2560)
+      //AT+BAUD=57600,0,0 : Change baud rate to 57600 (Arduino Nano, Leonardo, Micro, Pro Mini 3V3/5V and Duemilanove)
+    #endif
 
 #if (PRESSURE_SENSOR_AVAILABLE == true)
     {
@@ -1257,50 +1263,56 @@ void send_data_to_monitor()
 
   if (monitor_index==0) {
     Serial.println("A");
-    BLESerial.write("A");
+    writeToBLE("A");
     }
   if (monitor_index==1) {
-    Serial.println((uint8_t)BPM);
-    sprintf(strFloat,"-D%d",(uint8_t)BPM);
-    BLESerial.write(strFloat);
+    Serial.println(byte(BPM));
+    sprintf(strFloat,"-D%d",(int)BPM);
+    writeToBLE(strFloat);
     }
   if (monitor_index==2) {
-    Serial.println((uint8_t)Compression_perc);
-    sprintf(strFloat,"-D%d",(uint8_t)Compression_perc);
-    BLESerial.write(strFloat);
+    Serial.println(byte(Compression_perc));
+    sprintf(strFloat,"-D%d",(int)Compression_perc);
+    writeToBLE(strFloat);
     }
   if (monitor_index==3) {
-    Serial.println((uint8_t)pressure_abs);
-    sprintf(strFloat,"-D%d",(uint8_t)pressure_abs);
-    BLESerial.write(strFloat);
+    Serial.println(byte(pressure_abs));
+    sprintf(strFloat,"-D%d",(int)pressure_abs);
+    writeToBLE(strFloat);
     }
   if (monitor_index==4) {
-    Serial.println((uint8_t)failure);
-    sprintf(strFloat,"-D%d",(uint8_t)failure);
-    BLESerial.write(strFloat);
+    Serial.println(byte(failure));
+    sprintf(strFloat,"-D%d",(int)failure);
+    writeToBLE(strFloat);
     }
   if (monitor_index==5)
   {
     if (send_beep)
     {
-      Serial.println((uint8_t)1);
-      BLESerial.write("-D1");
+      Serial.println(byte(1));
+      writeToBLE("-D1");
       send_beep=0;
     }
     else {
-      Serial.println((uint8_t)0);
-      BLESerial.write("-D0");
+      Serial.println(byte(0));
+      writeToBLE("-D0");
     }
   }
   if (monitor_index==6){
-    Serial.println((uint8_t)insp_pressure);
-    sprintf(strFloat,"-D%d",(uint8_t)insp_pressure);
-    BLESerial.write(strFloat);
+    Serial.println(byte(insp_pressure));
+    sprintf(strFloat,"-D%d",(int)insp_pressure);
+    writeToBLE(strFloat);
   }
   
   monitor_index+=1;
   
   if (monitor_index==7) monitor_index=0;
+}
+
+void writeToBLE(char string[8]){
+  #if (BLE_enabled)
+    BLESerial.write(string); 
+  #endif
 }
 
 void LED_FREQ(uint8_t val)
