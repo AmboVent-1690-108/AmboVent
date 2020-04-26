@@ -42,7 +42,7 @@ Use the Rate potentiometer to move the arm up/down.
 #define SEND_TO_MONITOR true
 /// Set to true to send telemetry for debugging, false otherwise. See the end of this file for the
 /// optional telemetry data to send (comment/uncomment selected lines as desired)
-#define TELEMETRY false
+#define TELEMETRY true
 
 // User Interface (UI) settings
 
@@ -141,9 +141,9 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
 #    define curr_sense false         // o no current sensor
 #    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
-#    define FF 4.5                   // motion control feed forward
-#    define KP 1.2                   // motion control propportional gain
-#    define KI 7                     // motion control integral gain
+#    define FF 7                   // motion control feed forward
+#    define KP 2                   // motion control propportional gain
+#    define KI 1                     // motion control integral gain
 #    define integral_limit 5         // limits the integral of error
 #    define f_reduction_up_val 0.85  // reduce feedforward by this factor when moving up
 #endif
@@ -173,14 +173,14 @@ Use the Rate potentiometer to move the arm up/down.
 #define invert_pot false
 
 // Flow calculation definitions
-#define A1_TUBE_DIAMETER 0.022  // Diameter of A1 tube in meters
-#define A2_TUBE_DIAMETER 0.015  // Diameter of A2 tube in meters
-#define AIR_P 1.184             // input (preset) for air at 1 atm pressure and 25C
-#define MIN_TO_SEC 60
-#define METER3_TO_LITER 1000
+#define A1_TUBE_DIAMETER 0.022d  // Diameter of A1 tube in meters
+#define A2_TUBE_DIAMETER 0.015d  // Diameter of A2 tube in meters
+#define AIR_P 1.184d             // input (preset) for air at 1 atm pressure and 25C
+#define MIN_TO_SEC 60.0d
+#define METER3_TO_LITER 1000.0d
 
 //bluetooth pins and state
-#define BLE_enabled 1
+#define BLE_enabled 0
 #define pin_BLE_TX 1
 #define pin_BLE_RX 0
 
@@ -317,7 +317,9 @@ void setup()
 
 #if (FLOW_SENSOR_AVAILABLE)
     {
+        flowSensor.stopContinuous();
         flowSensor.init();
+        flowSensor.startContinuous();
         circle_area_A1 = get_circle_area_by_diameter(A1_TUBE_DIAMETER);
         circle_area_A2 = get_circle_area_by_diameter(A2_TUBE_DIAMETER);
     }
@@ -1207,8 +1209,8 @@ void read_IO()
         if (range_factor < 0)
             range_factor = 0;
     }
-
-    if (millis() - last_read_pres > 100)
+    flowSensor.readContinuous();
+    if (millis() - last_read_pres > 50)
     {
         last_read_pres = millis();
 #if (PRESSURE_SENSOR_AVAILABLE == 1)
@@ -1223,9 +1225,9 @@ void read_IO()
         {
             flowDiferencial = get_sensor_flow_measurement();
             Q_meter3_per_sec =
-                circle_area_A1
-                * square((2 / AIR_P)
-                         * (flowDiferencial / (pow(circle_area_A1 / circle_area_A2, 2) - 1)));
+                circle_area_A1*
+                sqrt((2 / AIR_P)*
+                (flowDiferencial / (pow(circle_area_A1 / circle_area_A2, 2) - 1)));
             Q_liter_per_minutes = Q_meter3_per_sec * MIN_TO_SEC * METER3_TO_LITER;
         }
 #endif
@@ -1246,13 +1248,12 @@ bool is_starting_respiration()
 }
 
 
-float get_sensor_flow_measurement()
+double get_sensor_flow_measurement()
 {
-    flowSensor.readSample();
     return flowSensor.getDifferentialPressure();
 }
 
-float get_circle_area_by_diameter(float diameter)
+double get_circle_area_by_diameter(double diameter)
 {
     return (diameter / 2) * (diameter / 2) * M_PI;
 }
@@ -1353,7 +1354,7 @@ void print_tele()  // UNCOMMENT THE TELEMETRY NEEDED
     //  Serial.print(" P :"); Serial.print(pressure_abs);
     //  Serial.print(" AvgP :"); Serial.print(int(avg_pres));
     //  Serial.print(" RF:");  Serial.print(range_factor);
-    //  Serial.print(" FlowDif :"); Serial.print(flowDiferencial);
-        Serial.print(" Q :"); Serial.print(Q_liter_per_minutes);
+//        Serial.print(" FlowDif :"); Serial.print(flowDiferencial, 5);
+        Serial.print(" Q :"); Serial.print(Q_liter_per_minutes == Q_liter_per_minutes ? Q_liter_per_minutes : 0);
     Serial.println("");
 }
