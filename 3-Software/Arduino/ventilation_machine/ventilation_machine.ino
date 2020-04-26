@@ -124,9 +124,9 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
 #    define curr_sense false         // o no current sensor
 #    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
-#    define FF 4.5                   // motion control feed forward
-#    define KP 1.2                   // motion control propportional gain
-#    define KI 7                     // motion control integral gain
+#    define FF 7                     // motion control feed forward
+#    define KP 2                   // motion control propportional gain
+#    define KI 1                     // motion control integral gain
 #    define integral_limit 5         // limits the integral of error
 #    define f_reduction_up_val 0.85  // reduce feedforward by this factor when moving up
 #else
