@@ -141,11 +141,12 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
 #    define curr_sense false         // o no current sensor
 #    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
-#    define FF 7                   // motion control feed forward
-#    define KP 2                   // motion control propportional gain
-#    define KI 1                     // motion control integral gain
+#    define KF 0                     // motion control feed forward
+#    define KP 0.1                     // motion control propportional gain
+#    define KI 0                     // motion control integral gain
+#    define KD 0                       // motion control differential gain
 #    define integral_limit 5         // limits the integral of error
-#    define f_reduction_up_val 0.85  // reduce feedforward by this factor when moving up
+#    define f_reduction_up_val 0  // reduce feedforward by this factor when moving up
 #endif
 
 // other Arduino pins alocation
@@ -235,6 +236,7 @@ const PROGMEM uint8_t vel[profile_length] = {
     126, 127, 127, 127, 127, 127, 127, 127, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 129, 129, 129, 129, 129, 129, 129, 129, 129, 128, 128, 128, 128, 128};
 
+
 uint8_t FD, FU, AD, AU, prev_FD, prev_FU, prev_AD, prev_AU, SW2, prev_SW2, prev_TST, RST,
     LED_status, USR_status, blueOn, calibON, numBlinkFreq, SW2_pressed, TST_pressed, menu_state;
 bool calibrated = false;
@@ -264,6 +266,13 @@ double circle_area_A1;       // Circle area of A1 tube
 double circle_area_A2;       // Circle area of A2 tube
 double Q_meter3_per_sec;     // Q (m^3/sec) volumetric flow rate
 double Q_liter_per_minutes;  // Q (L/min)
+
+//Flow PID vars
+double current_flow;
+double wanted_flow;
+uint8_t max_respiration_step;
+double peak_flow;
+
 
 enum main_states : uint8_t
 {
@@ -366,6 +375,8 @@ void setup()
     insp_pressure = PRESSURE_INSPIRATION_DEFAULT_PA;
     patient_triggered_breath = PATIENT_TRIGGERED_BREATH;
     motion_time = MOTION_TIME_DEFAULT_100MS;
+    max_respiration_step = motion_time / cycleTime;
+    peak_flow = 60;
     lcd.backlight();  // Turn on the blacklight and print a message.
 }
 
@@ -598,32 +609,26 @@ void run_profile_func()
     find_min_max_pressure();
 }
 
+double get_expected_flow_by_resp_step(int respiration_step) //f
+{
+  return ((max_respiration_step - respiration_step) * peak_flow) / max_respiration_step  + (respiration_step * peak_flow) / (max_respiration_step * 2);
+  
+}
+
+double get_expected_volume_by_resp_step(int respiration_step) //F
+{
+    return (max_respiration_step - respiration_step) * (get_expected_flow_by_resp_step(respiration_step) + get_expected_flow_by_resp_step(max_respiration_step) / 2);
+}
+
 void calculate_wanted_pos_vel()
 {
-    uint8_t pos_from_profile, vel_from_profile;
-    pos_from_profile = pgm_read_byte_near(pos + index);
-    vel_from_profile = pgm_read_byte_near(vel + index + 1);
-
-    range = range_factor * (max_arm_pos - min_arm_pos);  // range of movement in pot' readings
-    wanted_pos = float(pos_from_profile) * range / 255 + min_arm_pos;  // wanted pos in pot clicks
-    profile_planned_vel =
-        (float(vel_from_profile) - 128.01) * range / 255;  // in clicks per 0.2 second
-
-    planned_vel = profile_planned_vel;
-    if (hold_breath == 1 && safety_pressure_detected == 0)
-    {
-        if (wanted_pos <= float(A_pot) || index == 0)
-            hold_breath = 0;
-        planned_vel = 0;
-        integral = 0;
-        wanted_pos = float(A_pot);  // hold current position
-    }
-    if (safety_pressure_detected)
-        planned_vel = -SPEED_MULTIPLIER_REVERSE
-                      * planned_vel;  // to do the revese in case high pressure detected
+  if(!FLOW_SENSOR_AVAILABLE) 
+  {
+    current_flow = Q_liter_per_minutes; //Sensor input
+    //wanted_flow = pgm_read_byte_near(flow + index); //Setpoint
     prev_error = error;
-    error = wanted_pos - float(A_pot);
-
+    error = wanted_flow - current_flow;
+  
     integral += error * float(wanted_cycle_time) / 1000;
     if (integral > integral_limit)
         integral = integral_limit;
@@ -631,15 +636,58 @@ void calculate_wanted_pos_vel()
         integral = -integral_limit;
     if (index < 2 || prev_error * error < 0)
         integral = 0;  // zero the integral accumulator at the beginning of cycle and movement up
-    if (planned_vel < 0)
-        f_reduction_up = f_reduction_up_val;
+    if (error > 0) 
+        f_reduction_up = KF; //Reducing the PIDF output with feedfowrard while in movement up
     else
-        f_reduction_up = 1;  // reduce f for the movement up
-
+        f_reduction_up = 0;  // 
+    
     wanted_vel_PWM =
-        FF * planned_vel * f_reduction_up + KP * error + KI * integral;  // PID correction
-    wanted_vel_PWM = wanted_vel_PWM * float(cycleTime)
-                     / float(wanted_cycle_time);  // reduce speed for longer cycles
+          f_reduction_up + KP * error + KI * integral + KD * (prev_error - error);  // PID correction
+    
+  }
+  else
+  {
+      uint8_t pos_from_profile, vel_from_profile;
+      pos_from_profile = pgm_read_byte_near(pos + index);
+      vel_from_profile = pgm_read_byte_near(vel + index + 1);
+  
+      range = range_factor * (max_arm_pos - min_arm_pos);  // range of movement in pot' readings
+      wanted_pos = float(pos_from_profile) * range / 255 + min_arm_pos;  // wanted pos in pot clicks
+      profile_planned_vel =
+          (float(vel_from_profile) - 128.01) * range / 255;  // in clicks per 0.2 second
+  
+      planned_vel = profile_planned_vel;
+      if (hold_breath == 1 && safety_pressure_detected == 0)
+      {
+          if (wanted_pos <= float(A_pot) || index == 0)
+              hold_breath = 0;
+          planned_vel = 0;
+          integral = 0;
+          wanted_pos = float(A_pot);  // hold current position
+      }
+      if (safety_pressure_detected)
+          planned_vel = -SPEED_MULTIPLIER_REVERSE
+                        * planned_vel;  // to do the revese in case high pressure detected
+      prev_error = error;
+      error = wanted_pos - float(A_pot);
+  
+      integral += error * float(wanted_cycle_time) / 1000;
+      if (integral > integral_limit)
+          integral = integral_limit;
+      if (integral < -integral_limit)
+          integral = -integral_limit;
+      if (index < 2 || prev_error * error < 0)
+          integral = 0;  // zero the integral accumulator at the beginning of cycle and movement up
+      if (planned_vel < 0)
+          f_reduction_up = f_reduction_up_val;
+      else
+          f_reduction_up = 1;  // reduce f for the movement up
+  
+      wanted_vel_PWM =
+          KF * planned_vel * f_reduction_up + KP * error + KI * integral;  // PID correction
+      wanted_vel_PWM = wanted_vel_PWM * float(cycleTime)
+                       / float(wanted_cycle_time);  // reduce speed for longer cycles
+  }
 }
 
 void standby_func()  // not running profile
@@ -1246,7 +1294,6 @@ bool is_starting_respiration()
 {
     return index == 0;
 }
-
 
 double get_sensor_flow_measurement()
 {
