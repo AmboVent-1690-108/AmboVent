@@ -272,7 +272,10 @@ double current_flow;
 double wanted_flow;
 uint8_t max_respiration_step;
 double peak_flow;
-
+double current_left_volume;
+double expected_left_volume;
+double ratio_current_expected;
+double wanted_next_flow;
 
 enum main_states : uint8_t
 {
@@ -624,10 +627,14 @@ void calculate_wanted_pos_vel()
 {
   if(!FLOW_SENSOR_AVAILABLE) 
   {
-    current_flow = Q_liter_per_minutes; //Sensor input
+    current_left_volume -= Q_liter_per_minutes;
+    expected_left_volume = get_expected_volume_by_resp_step(index);
+    ratio_current_expected = current_left_volume / expected_left_volume;
+    wanted_next_flow = ratio_current_expected * get_expected_flow_by_resp_step(index + 1);
+    
     //wanted_flow = pgm_read_byte_near(flow + index); //Setpoint
     prev_error = error;
-    error = wanted_flow - current_flow;
+    error = wanted_next_flow / Q_liter_per_minutes;
   
     integral += error * float(wanted_cycle_time) / 1000;
     if (integral > integral_limit)
@@ -642,7 +649,7 @@ void calculate_wanted_pos_vel()
         f_reduction_up = 0;  // 
     
     wanted_vel_PWM =
-          f_reduction_up + KP * error + KI * integral + KD * (prev_error - error);  // PID correction
+          f_reduction_up + KP * error + KD * (prev_error - error);  // PID correction
     
   }
   else
