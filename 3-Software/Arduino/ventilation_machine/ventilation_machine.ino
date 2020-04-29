@@ -141,11 +141,15 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
 #    define curr_sense false         // o no current sensor
 #    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
+#    define FLOW_KF 0.3                     // motion control feed forward
+#    define FLOW_KP 0                      // motion control propportional gain
+#    define FLOW_KI 0                     // motion control integral gain
+#    define FLOW_KD 0                       // motion control differential gain
 #    define KF 0                     // motion control feed forward
-#    define KP 0.1                     // motion control propportional gain
+#    define KP 0.7                     // motion control propportional gain
 #    define KI 0                     // motion control integral gain
 #    define KD 0                       // motion control differential gain
-#    define integral_limit 5         // limits the integral of error
+#    define integral_limit 50         // limits the integral of error
 #    define f_reduction_up_val 0  // reduce feedforward by this factor when moving up
 #endif
 
@@ -270,7 +274,7 @@ double Q_liter_per_minutes;  // Q (L/min)
 //Flow PID vars
 double current_flow;
 double wanted_flow;
-uint8_t max_respiration_step;
+int max_respiration_step;
 double peak_flow;
 double current_left_volume;
 double expected_left_volume;
@@ -378,7 +382,7 @@ void setup()
     insp_pressure = PRESSURE_INSPIRATION_DEFAULT_PA;
     patient_triggered_breath = PATIENT_TRIGGERED_BREATH;
     motion_time = MOTION_TIME_DEFAULT_100MS;
-    max_respiration_step = motion_time / cycleTime;
+    max_respiration_step = 100;
     peak_flow = 60;
     lcd.backlight();  // Turn on the blacklight and print a message.
 }
@@ -553,9 +557,9 @@ void run_profile_func()
         lastIndex = millis();  // last start of cycle time
         calculate_wanted_pos_vel();
 
-        if (100 * abs(error) / (max_arm_pos - min_arm_pos) > motion_control_allowed_error
-            && cycle_number > 1)
-            motion_failure = 1;
+//        if (100 * abs(error) / (max_arm_pos - min_arm_pos) > motion_control_allowed_error
+//            && cycle_number > 1)
+//            motion_failure = 1;
 
         if (safety_pressure_detected)
             index -= SPEED_MULTIPLIER_REVERSE
@@ -620,37 +624,61 @@ double get_expected_flow_by_resp_step(int respiration_step) //f
 
 double get_expected_volume_by_resp_step(int respiration_step) //F
 {
-    return (max_respiration_step - respiration_step) * (get_expected_flow_by_resp_step(respiration_step) + get_expected_flow_by_resp_step(max_respiration_step) / 2);
+    return (max_respiration_step - respiration_step) * (get_expected_flow_by_resp_step(respiration_step) + get_expected_flow_by_resp_step(max_respiration_step)) / 2;
 }
 
+bool is_moving_up = false;
+int current_step;
 void calculate_wanted_pos_vel()
 {
-  if(!FLOW_SENSOR_AVAILABLE) 
+  if(FLOW_SENSOR_AVAILABLE) 
   {
-    current_left_volume -= Q_liter_per_minutes;
-    expected_left_volume = get_expected_volume_by_resp_step(index);
-    ratio_current_expected = current_left_volume / expected_left_volume;
-    wanted_next_flow = ratio_current_expected * get_expected_flow_by_resp_step(index + 1);
+    if(!is_moving_up && ((float(A_pot) >= max_arm_pos) || (current_step + 2 >=  max_respiration_step)))
+    {
+      is_moving_up = true;
+      current_step= 0;
+      current_left_volume = get_expected_volume_by_resp_step(0);
+      error = 0;
+    }
     
-    //wanted_flow = pgm_read_byte_near(flow + index); //Setpoint
-    prev_error = error;
-    error = wanted_next_flow / Q_liter_per_minutes;
+    if(is_moving_up)
+    {
+      prev_error = error;
+      error = min_arm_pos - float(A_pot);
+      if(abs(error) < 10)
+      {
+        is_moving_up = false;
+      }
+      wanted_vel_PWM =
+            KP * error + KD * (prev_error - error);  // PID correction
+    }
   
-    integral += error * float(wanted_cycle_time) / 1000;
-    if (integral > integral_limit)
-        integral = integral_limit;
-    if (integral < -integral_limit)
-        integral = -integral_limit;
-    if (index < 2 || prev_error * error < 0)
-        integral = 0;  // zero the integral accumulator at the beginning of cycle and movement up
-    if (error > 0) 
-        f_reduction_up = KF; //Reducing the PIDF output with feedfowrard while in movement up
     else
-        f_reduction_up = 0;  // 
+    {
+      current_left_volume = current_left_volume - Q_liter_per_minutes;
+      expected_left_volume = get_expected_volume_by_resp_step(current_step);
+      ratio_current_expected = current_left_volume / expected_left_volume;
+      wanted_next_flow = ratio_current_expected * get_expected_flow_by_resp_step(current_step + 1);
+      
+      prev_error = error;
+      error = wanted_next_flow - Q_liter_per_minutes;
     
-    wanted_vel_PWM =
-          f_reduction_up + KP * error + KD * (prev_error - error);  // PID correction
-    
+      integral += error * float(wanted_cycle_time) / 1000;
+      if (integral > integral_limit)
+          integral = integral_limit;
+      if (integral < -integral_limit)
+          integral = -integral_limit;
+      if (current_step< 2 || error < 0)
+          integral = 0;  // zero the integral accumulator at the beginning of cycle and movement up
+      if (float(A_pot) > (max_arm_pos - min_arm_pos) * 0.7 + min_arm_pos) 
+          f_reduction_up = 0; 
+      else
+          f_reduction_up = 0;  // 
+      
+      wanted_vel_PWM =
+            f_reduction_up + FLOW_KF * wanted_next_flow  + FLOW_KI * integral + FLOW_KP * error + FLOW_KD * (error - prev_error);  // PID correction
+      current_step += 1;
+    }
   }
   else
   {
@@ -746,6 +774,7 @@ void initialize_breath()
     index = 0;
     in_wait = 0;
     high_pressure_detected = 0;
+    current_left_volume = get_expected_volume_by_resp_step(0);
 }
 
 void start_new_cycle()
@@ -1279,11 +1308,18 @@ void read_IO()
 #if (FLOW_SENSOR_AVAILABLE)
         {
             flowDiferencial = get_sensor_flow_measurement();
-            Q_meter3_per_sec =
-                circle_area_A1*
-                sqrt((2 / AIR_P)*
-                (flowDiferencial / (pow(circle_area_A1 / circle_area_A2, 2) - 1)));
-            Q_liter_per_minutes = Q_meter3_per_sec * MIN_TO_SEC * METER3_TO_LITER;
+            if(flowDiferencial > 0) 
+            {
+              Q_meter3_per_sec =
+                  circle_area_A1*
+                  sqrt((2 / AIR_P)*
+                  (flowDiferencial / (pow(circle_area_A1 / circle_area_A2, 2) - 1)));
+              Q_liter_per_minutes = Q_meter3_per_sec * MIN_TO_SEC * METER3_TO_LITER;
+            }
+            else 
+            {
+              Q_liter_per_minutes = 0;
+            }
         }
 #endif
     }
@@ -1406,9 +1442,9 @@ void print_tele()  // UNCOMMENT THE TELEMETRY NEEDED
     //  Serial.print(" freq:");  Serial.print(A_rate);
     //  Serial.print(" w cyc t:"); Serial.print(wanted_cycle_time);
     //  Serial.print(" P :"); Serial.print(pressure_abs);
-    //  Serial.print(" AvgP :"); Serial.print(int(avg_pres));
-    //  Serial.print(" RF:");  Serial.print(range_factor);
-//        Serial.print(" FlowDif :"); Serial.print(flowDiferencial, 5);
-        Serial.print(" Q :"); Serial.print(Q_liter_per_minutes == Q_liter_per_minutes ? Q_liter_per_minutes : 0);
+//      Serial.print(" max step :"); Serial.print(()); 
+//      Serial.print(" test:");  Serial.print(error);
+        Serial.print(" current step :"); Serial.print(wanted_next_flow);
+        Serial.print(" Q :"); Serial.print(Q_liter_per_minutes);
     Serial.println("");
 }
