@@ -160,7 +160,15 @@ Use the Rate potentiometer to move the arm up/down.
 #define pin_FRQ 3  // analog pin of rate potentiometer control
 #define pin_PRE 6  // analog pin of pressure potentiometer control
 
-// Talon SR or SPARK controller PWM settings ("angle" for Servo library)
+//L298N specific
+#define L298N false
+#define pin_SPEED   7   // analog
+#define pin_FORWARD 5   // digital
+#define pin_BACK    3   // digital
+
+
+
+// Talon SR or SPARK controller PWM settings ("angle" for Servo library
 #define PWM_mid 93  // was 93 -   mid value for PWM 0 motion - higher pushes up
 #define PWM_max 85
 #define PWM_min -85
@@ -356,6 +364,12 @@ enum main_states state;
 /// @return     None
 void setup()
 {
+    if(L298N) {
+      pinMode(pin_SPEED, OUTPUT);
+      pinMode(pin_FORWARD, OUTPUT);  
+      pinMode(pin_BACK, OUTPUT);
+    }
+    
     pinMode(pin_PWM, OUTPUT);
     pinMode(pin_FD, INPUT_PULLUP);
     pinMode(pin_FU, INPUT_PULLUP);
@@ -367,8 +381,9 @@ void setup()
     pinMode(pin_LED_FREQ, OUTPUT);
     pinMode(pin_LED_Fail, OUTPUT);
     pinMode(pin_USR, OUTPUT);
-    motor.attach(pin_PWM);
-
+    if (!L298N) {    
+       motor.attach(pin_PWM);
+    }
     Serial.begin(115200);
     Serial.print("\nAmboVent Version: ");
     Serial.println(VERSION_STR);
@@ -1048,7 +1063,26 @@ void set_motor_PWM(float wanted_vel_PWM)
     if (wanted_vel_PWM < PWM_min)
         wanted_vel_PWM = PWM_min;  // limit PWM
     motorPWM = PWM_mid + int(wanted_vel_PWM);
-    motor.write(motorPWM);
+
+    if (L298N){
+      if(motorPWM > PWM_mid + 3){  // leave a -3 to +3 stop range
+        digitalWrite(pin_FORWARD, HIGH);
+        digitalWrite(pin_BACK, LOW);
+      }
+      else if(motorPWM < PWM_mid - 3){  // leave a -3 to +3 stop range
+        digitalWrite(pin_FORWARD, LOW);
+        digitalWrite(pin_BACK, HIGH);
+      }
+      else {
+        digitalWrite(pin_FORWARD, LOW);
+        digitalWrite(pin_BACK, LOW);        
+      }
+    
+      analogWrite(pin_SPEED, map(motorPWM, PWM_min, PWM_max, 0, 25));
+    }
+    else {
+        motor.write(motorPWM);
+    }
 }
 
 int read_motion_for_calib()
