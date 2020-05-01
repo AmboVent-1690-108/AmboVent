@@ -181,7 +181,7 @@ PenaltyReturnTypeOnItsOwnLine: 200
 # Note: see DerivePointerAlignment too, as it takes precedence
 PointerAlignment: Left
 RawStringFormats: 
-  - Delimiter:       pb
+  - Delimiters:       [pb]
     Language:        TextProto
     BasedOnStyle:    google
 ReflowComments:  true
