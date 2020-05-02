@@ -111,24 +111,26 @@ Use the Rate potentiometer to move the arm up/down.
 // The system has 3 potentiometers and can control the inspiration (inhalation) pressure.
 #if FULL_CONFIGURATION == true
 #    define LCD_AVAILABLE true
-#    define PIN_SW2 4                // breath - On / Off / cal
-#    define pin_TST 2                // test mode - not in use
-#    define pin_RST 5                // reset alarm - not in use
-#    define pin_LED_AMP 13           // amplitude LED
-#    define pin_LED_FREQ 13          // frequency LED
-#    define pin_LED_Fail 10          // FAIL and calib blue LED
-#    define pin_USR 9                // User LED
+#    define PIN_SW2 4  // breath - On / Off / cal
+#    define pin_TST 2  // test mode - run one repiration cycle, enter and navigate the menu state
+#    define pin_RST 5  // reset alarm - not in use
+#    define pin_LED_RED 10    // Red LED - Indication for critical failures
+#    define pin_LED_BLUE 12   // blue LED - not in use
+#    define pin_LED_GREEN 11  // green LED -Indication for normal operation
+#    define pin_LED_USR \
+        9  // User LED - stady on when system is ON, blinking when in menu and clibrations
 #    define pin_FD 13                // freq Down - not used when you have potentiometers
 #    define pin_FU 13                // freq Up - not used when you have potentiometers
 #    define pin_AD 13                // Amp Down - not used when you have potentiometers
 #    define pin_AU 13                // Amp Up - not used when you have potentiometers
 #    define curr_sense false         // o no current sensor
-#    define control_with_pot true    // 1 = control with potentiometers  0 = with push buttons
-#    define FF 7                     // motion control feed forward
-#    define KP 2                     // motion control propportional gain
+#    define control_with_pot true    // 1 = control with potentiometers  0 = with push butto
+#    define FF 10                    // motion control feed forward
+#    define KP 3                     // motion control propportional gain
+#>>>>>>> master
 #    define KI 1                     // motion control integral gain
-#    define integral_limit 5         // limits the integral of error
-#    define f_reduction_up_val 0.85  // reduce feedforward by this factor when moving up
+#   efine integral_limit 5         // limits the integral of error
+#    define f_reduction_up_val 0.80  // reduce feedforward by this factor when moving up
 #else
 // FULL_CONFIGURATION == false: no potentiometers for User Interface, feedback pot on pulley.
 // The system can NOT control the inspiration (inhalation) pressure.
@@ -138,7 +140,7 @@ Use the Rate potentiometer to move the arm up/down.
 #    define pin_LED_AMP 11           // amplitude LED
 #    define pin_LED_FREQ 9           // frequency LED
 #    define pin_LED_Fail 10          // FAIL and calib blue LED
-#    define pin_USR 12               // User LED
+#    define pin_LED_USR 12           // User LED
 #    define pin_FD 4                 // freq Down
 #    define pin_FU 5                 // freq Up
 #    define pin_AD 8                 // Amp Down
@@ -176,7 +178,7 @@ Use the Rate potentiometer to move the arm up/down.
 #define cycleTime 10        // milisec
 #define alpha 0.95          // filter for current apatation - higher = stronger low pass filter
 #define profile_length 250  // motion control profile length
-#define motion_control_allowed_error 30  // % of range
+#define motion_control_allowed_error 1000  // % of range
 
 // motor and sensor definitions
 #define invert_mot true
@@ -254,6 +256,8 @@ uint8_t TST_pressed;
 uint8_t menu_state;
 
 bool calibrated = false;
+bool is_led_red_on = false;
+bool is_led_green_on = false;
 
 uint8_t monitor_index = 0;
 uint8_t BPM = 14;
@@ -323,9 +327,12 @@ uint16_t min_arm_pos;
 
 uint32_t lastSent;
 uint32_t lastIndex;
-uint32_t lastUSRblink;
+uint32_t last_led_usr_blink_ms;
+uint32_t last_led_red_blink_ms;
+uint32_t last_led_green_blink_ms;
+uint32_t last_led_yellow_blink_ms;
 uint32_t last_TST_not_pressed;
-uint32_t lastBlue;
+uint32_t last_display_update_during_calib;
 uint32_t start_wait;
 uint32_t last_sent_data;
 uint32_t last_read_pres;
@@ -384,6 +391,10 @@ void setup()
     {
         motor.attach(pin_PWM);
     }
+    pinMode(pin_LED_RED, OUTPUT);
+    pinMode(pin_LED_GREEN, OUTPUT);
+    // pinMode(pin_LED_BLUE, OUTPUT); //TODO: Return if needed
+    pinMode(pin_LED_USR, OUTPUT);
     Serial.begin(115200);
     Serial.print("\nAmboVent Version: ");
     Serial.println(VERSION_STR);
@@ -440,6 +451,7 @@ void setup()
     patient_triggered_breath = PATIENT_TRIGGERED_BREATH;
     motion_time = MOTION_TIME_DEFAULT_100MS;
     lcd.backlight();  // Turn on the blacklight and print a message.
+    LED_USR(1);
 }
 
 /// @brief      Run repeatedly after setup()
@@ -463,9 +475,9 @@ void loop()
             last_TST_not_pressed = millis();
         if (millis() - last_TST_not_pressed > 3000)
         {
-            LED_USR(1);
             while (TST == 1 || TST_pressed)
             {
+                blink_user_led();
                 read_IO();
             }  // wait for button release
             progress = 0;
@@ -496,6 +508,7 @@ void loop()
 
 void display_menu()
 {
+    blink_user_led();
     menu_state = map(pot_rate, 0, 1023, 0, 8);
     menu_state = constrain(menu_state, 0, 8);
     switch (menu_state)
@@ -555,9 +568,9 @@ void display_menu()
                 read_IO();
                 motion_time = map(pot_rate, 0, 1023, 25, 50);
                 motion_time = constrain(motion_time, 25, 50);
-                if (millis() - lastUSRblink > 100)
+                if (millis() - last_display_update_during_calib > 100)
                 {
-                    lastUSRblink = millis();
+                    last_display_update_during_calib = millis();
                     lcd.clear();
                     lcd.setCursor(0, 0);
                     lcd.print("Set Motion Time");
@@ -606,6 +619,7 @@ void exit_menu()
     calibON = 0;
     display_LCD();
     progress = 0;
+    LED_USR(1);
 }
 
 void run_profile_func()
@@ -616,10 +630,6 @@ void run_profile_func()
         cycles_lost = constrain(cycles_lost, 0, 15);
         lastIndex = millis();  // last start of cycle time
         calculate_wanted_pos_vel();
-
-        if (100 * abs(error) / (max_arm_pos - min_arm_pos) > motion_control_allowed_error
-            && cycle_number > 1)
-            motion_failure = 1;
 
         if (safety_pressure_detected)
             index -= SPEED_MULTIPLIER_REVERSE
@@ -669,7 +679,6 @@ void run_profile_func()
             else
                 start_new_cycle();  // time has come ... start from index = 0
         }
-        blink_user_led();
     }
     calc_failure();
     set_motor_PWM(wanted_vel_PWM);
@@ -722,25 +731,6 @@ void calculate_wanted_pos_vel()
 
 void standby_func()  // not running profile
 {
-    if (USR_status)
-    {
-        if (millis() - lastUSRblink > 10)
-        {
-            USR_status = 0;
-            lastUSRblink = millis();
-            LED_USR(0);
-        }
-    }
-    else
-    {
-        if (millis() - lastUSRblink > 490)
-        {
-            USR_status = 1;
-            lastUSRblink = millis();
-            LED_USR(1);
-        }
-    }
-
     if (TST_pressed)
     {
         initialize_breath();
@@ -808,40 +798,12 @@ void find_min_max_pressure()
     }
 }
 
-void blink_user_led()
-{
-    if (high_pressure_detected || safety_pressure_detected)  // blink LED fast
-    {
-        if (USR_status)
-        {
-            if (millis() - lastUSRblink > 20)
-            {
-                USR_status = 0;
-                lastUSRblink = millis();
-                LED_USR(0);
-            }
-        }
-        else
-        {
-            if (millis() - lastUSRblink > 80)
-            {
-                USR_status = 1;
-                lastUSRblink = millis();
-                LED_USR(1);
-            }
-        }
-    }
-    else  //  not in failure - blink LED once per cycle
-    {
-        if (index > 0.1 * profile_length)
-            LED_USR(0);
-        else
-            LED_USR(1);
-    }
-}
-
 void calc_failure()
 {
+    if (100 * abs(error) / (max_arm_pos - min_arm_pos) > motion_control_allowed_error
+        && cycle_number > 1)
+        motion_failure = 1;
+
     if (prev_max_pressure < PRESSURE_MAX_DISCONNECTED_PA && cycle_number > 2)
         disconnected = 1;
     else
@@ -874,10 +836,6 @@ void calc_failure()
     {
         no_fail_counter = 0;
     }
-    else
-    {
-        LED_FAIL(0);
-    }
     if (no_fail_counter >= 3)
         safety_pressure_counter = 0;
     if (no_fail_counter >= 100)
@@ -887,9 +845,9 @@ void calc_failure()
 
 void display_text_2_lines(char const *message1, char const *message2)
 {
-    if (millis() - lastUSRblink > 100)
+    if (millis() - last_display_update_during_calib > 100)
     {
-        lastUSRblink = millis();
+        last_display_update_during_calib = millis();
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print(message1);
@@ -909,18 +867,17 @@ void display_text_calib(char const *message)
 
 void display_pot_during_calib()
 {
-    if (millis() - lastUSRblink > 100)
+    if (millis() - last_display_update_during_calib > 100)
     {
         lcd.setCursor(13, 0);
         lcd.print(A_pot);
         lcd.print(" ");
-        lastUSRblink = millis();
+        last_display_update_during_calib = millis();
     }
 }
 
 void calibrate_arm_range()  // used for calibaration of motion range
 {
-    LED_USR(1);
     calibON = 1;
     progress = 0;
 
@@ -955,17 +912,20 @@ void internal_arm_calib_step()
     set_motor_PWM(0);
     display_pot_during_calib();
     delay(3);
+    blink_user_led();
 }
 
 void calibrate_pot_range()  // used for calibaration of potentiometers
 {
-    LED_USR(1);
     calibON = 2;
 
     read_IO();
     display_text_calib("Pot to left pos");
     while (TST_pressed == 0)
+    {
+        blink_user_led();
         read_IO();  // step 1 - calibrate top position
+    }
     comp_pot_low = analogRead(pin_AMP);
     rate_pot_low = analogRead(pin_FRQ);
     pres_pot_low = analogRead(pin_PRE);
@@ -973,7 +933,10 @@ void calibrate_pot_range()  // used for calibaration of potentiometers
     read_IO();
     display_text_calib("Pot to right pos");
     while (TST_pressed == 0)
+    {
+        blink_user_led();
         read_IO();  // step 2 - calibrate bottom position
+    }
     comp_pot_high = analogRead(pin_AMP);
     rate_pot_high = analogRead(pin_FRQ);
     pres_pot_high = analogRead(pin_PRE);
@@ -1045,6 +1008,9 @@ void set_motor_PWM(float wanted_vel_PWM)
         index_last_motion = index;
     if (calibON == 1)
         wanted_vel_PWM = read_motion_for_calib();  // allows manual motion during calibration
+
+    activate_rgb_led();
+
     if (invert_mot)
         wanted_vel_PWM = -wanted_vel_PWM;
     if (curr_sense)
@@ -1338,6 +1304,43 @@ bool is_starting_respiration()
     return index == 0;
 }
 
+void activate_rgb_led()
+{
+    if (motion_failure)
+    {
+        LED_BLUE(0);
+        LED_GREEN(0);
+        LED_RED(1);
+    }
+    else if (safety_pressure_detected)
+    {
+        LED_GREEN(0);
+        blink_red_led();
+        LED_BLUE(0);
+    }
+    else if (wanted_vel_PWM > 0 && !calibON && planned_vel > 0)  // Arm is going down
+    {
+        if (disconnected || high_pressure_detected)
+        {
+            LED_BLUE(0);
+            LED_RED(1);
+            LED_GREEN(0);
+        }
+        else
+        {
+            LED_GREEN(1);
+            LED_RED(0);
+            LED_BLUE(0);
+        }
+    }
+    else
+    {
+        LED_GREEN(0);
+        LED_RED(0);
+        LED_BLUE(0);
+    }
+}
+
 void send_data_to_monitor()
 {
     if (monitor_index == 0)
@@ -1367,24 +1370,102 @@ void send_data_to_monitor()
         monitor_index = 0;
 }
 
-void LED_FREQ(uint8_t val)
+void blink_user_led()
 {
-    digitalWrite(pin_LED_FREQ, val);
+    if (USR_status)
+    {
+        if (millis() - last_led_usr_blink_ms > 10)
+        {
+            USR_status = 0;
+            last_led_usr_blink_ms = millis();
+            LED_USR(0);
+        }
+    }
+    else
+    {
+        if (millis() - last_led_usr_blink_ms > 490)
+        {
+            USR_status = 1;
+            last_led_usr_blink_ms = millis();
+            LED_USR(1);
+        }
+    }
 }
 
-void LED_AMP(uint8_t val)
+void blink_green_led()
 {
-    digitalWrite(pin_LED_AMP, val);
+    if (is_led_green_on)
+    {
+        if (millis() - last_led_green_blink_ms > 10)
+        {
+            is_led_green_on = false;
+            last_led_green_blink_ms = millis();
+            LED_GREEN(0);
+        }
+    }
+    else
+    {
+        if (millis() - last_led_green_blink_ms > 490)
+        {
+            is_led_green_on = true;
+            last_led_green_blink_ms = millis();
+            LED_GREEN(1);
+        }
+    }
 }
 
-void LED_FAIL(uint8_t val)
+void blink_red_led()
 {
-    digitalWrite(pin_LED_Fail, val);
+    if (is_led_red_on)
+    {
+        if (millis() - last_led_red_blink_ms > 10)
+        {
+            is_led_red_on = false;
+            last_led_red_blink_ms = millis();
+            LED_RED(0);
+        }
+    }
+    else
+    {
+        if (millis() - last_led_red_blink_ms > 490)
+        {
+            is_led_red_on = true;
+            last_led_red_blink_ms = millis();
+            LED_RED(1);
+        }
+    }
+}
+
+void LED_RED(uint8_t val)
+{
+    digitalWrite(pin_LED_RED, val);
+}
+
+void LED_GREEN(uint8_t val)
+{
+    digitalWrite(pin_LED_GREEN, val);
+}
+
+void LED_BLUE(uint8_t val)
+{
+    digitalWrite(pin_LED_BLUE, val);
+}
+
+void LED_PURPLE(uint8_t val)
+{
+    digitalWrite(pin_LED_BLUE, val);
+    digitalWrite(pin_LED_RED, val);
+}
+
+void LED_YELLOW(uint8_t val)
+{
+    digitalWrite(pin_LED_GREEN, val);
+    digitalWrite(pin_LED_RED, val);
 }
 
 void LED_USR(uint8_t val)
 {
-    digitalWrite(pin_USR, val);
+    digitalWrite(pin_LED_USR, val);
 }
 
 void print_tele()  // UNCOMMENT THE TELEMETRY NEEDED
