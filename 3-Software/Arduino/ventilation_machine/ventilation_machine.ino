@@ -186,8 +186,8 @@ Use the Rate potentiometer to move the arm up/down.
 
 //bluetooth pins and state
 #define BLE_enabled 0
-#define pin_BLE_TX 1
-#define pin_BLE_RX 0
+#define pin_BLE_TX 7
+#define pin_BLE_RX 8
 
 Servo motor;
 LiquidCrystal_I2C lcd(0x27, 16,
@@ -1350,55 +1350,113 @@ double get_circle_area_by_diameter(double diameter)
 
 void send_data_to_monitor()
 {
+  /*{
+    "f": "flow",// sensor
+    "p": "pressure",// sensor
+    "r": "rate",// control
+    "cp": "compressionPercentage",// control
+    "mxp": "maxPressure",// control
+    "ie":"ieRatio",// control
+    "err": "error"// alarm
+  }*/
   char strFloat[8];
+  int rate = 0; //not sure where to get this from
+  int maxPressure = 0; //not sure where to get this from
+  int ieRatio = 0; //not sure where to get this from
 
+  //send json array to ble serial every 20 ms. we can improve on this as needed (softwareSerial is slow)
+  sprintf(strFloat,"{\"f\":\"%d\",\"p\":\"%d\",\"r\":\"%d\",\"cp\":\"%d\",\"mxp\":\"%d\",\"ie\":\"%d\",\"err\":\"%d\"}",
+  (int)Q_liter_per_minutes,(int)pressure_abs,(int)rate,(int)Compression_perc,(int)maxPressure,(int)ieRatio,(int)failure);
+  writeToBLE(strFloat);
+  
   if (monitor_index==0) {
     Serial.println("A");
-    writeToBLE("A");
-    }
+   }
   if (monitor_index==1) {
     Serial.println(byte(BPM));
-    sprintf(strFloat,"-D%d",(int)BPM);
-    writeToBLE(strFloat);
-    }
+   }
   if (monitor_index==2) {
     Serial.println(byte(Compression_perc));
-    sprintf(strFloat,"-D%d",(int)Compression_perc);
-    writeToBLE(strFloat);
     }
   if (monitor_index==3) {
     Serial.println(byte(pressure_abs));
-    sprintf(strFloat,"-D%d",(int)pressure_abs);
-    writeToBLE(strFloat);
     }
   if (monitor_index==4) {
     Serial.println(byte(failure));
-    sprintf(strFloat,"-D%d",(int)failure);
-    writeToBLE(strFloat);
+   
     }
   if (monitor_index==5)
   {
     if (send_beep)
     {
       Serial.println(byte(1));
-      writeToBLE("-D1");
       send_beep=0;
     }
     else {
       Serial.println(byte(0));
-      writeToBLE("-D0");
     }
   }
   if (monitor_index==6){
     Serial.println(byte(insp_pressure));
-    sprintf(strFloat,"-D%d",(int)insp_pressure);
-    writeToBLE(strFloat);
   }
   
   monitor_index+=1;
   
   if (monitor_index==7) monitor_index=0;
 }
+void send_data_to_monitor()
+{
+  /*{
+    "f": "flow",// sensor
+    "p": "pressure",// sensor
+    "r": "rate",// control
+    "cp": "compressionPercentage",// control
+    "mxp": "maxPressure",// control
+    "ie":"ieRatio",// control
+    "err": "error"// alarm
+  }*/
+  char strFloat[8];
+  int rate = 0; //not sure where to get this from
+  int maxPressure = 0; //not sure where to get this from
+  int ieRatio = 0; //not sure where to get this from
+
+  //send json array to ble serial every 20 ms. we can improve on this as needed (softwareSerial is slow)
+  sprintf(strFloat,"{\"f\":\"%d\",\"p\":\"%d\",\"r\":\"%d\",\"cp\":\"%d\",\"mxp\":\"%d\",\"ie\":\"%d\",\"err\":\"%d\"}",
+  (int)Q_liter_per_minutes,(int)pressure_abs,(int)rate,(int)Compression_perc,(int)maxPressure,(int)ieRatio,(int)failure);
+  writeToBLE(strFloat);
+  
+  if (monitor_index==0) {
+      Serial.println("A");
+    }
+  if (monitor_index==1) {
+      Serial.println(byte(BPM));
+    }
+  if (monitor_index==2) {
+      Serial.println(byte(Compression_perc));
+    }
+  if (monitor_index==3) {
+      Serial.println(byte(pressure_abs));
+    }
+  if (monitor_index==4) {
+      Serial.println(byte(failure));
+    }
+  if (monitor_index==5){
+      if (send_beep){
+        Serial.println(byte(1));
+        send_beep=0;
+      }else {
+        Serial.println(byte(0));
+      }
+    }
+  if (monitor_index==6){
+    Serial.println(byte(insp_pressure));
+    }
+  
+  monitor_index+=1;
+  
+  if (monitor_index==7) monitor_index=0;
+}
+
 
 void writeToBLE(char string[8]){
   #if (BLE_enabled)
