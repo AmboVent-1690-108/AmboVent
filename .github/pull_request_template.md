@@ -10,32 +10,48 @@ these. -->
 merge until you have completed all items. -->
 
 - [ ] I have run the code formatter with `./run_clang-format.sh` (see main 
-[README.md](https://github.com/AmboVent-1690-108/AmboVent#software) for details on how)
+[README.md](https://github.com/AmboVent-1690-108/AmboVent#software) for details on how).
 - [ ] I have built the code in the Arduino IDE (or with the command-line tool) and pasted the 
-build output below
+  **last 2 lines** of the build output below, so others can see how my changes affect the _size_ of 
+  the built binary application. 
+    - [ ] I have also updated all information in the header above the build output below to describe 
+      the build conditions.
 - [ ] If I have touched *any* lines of code in the software, other than comments, I have incremented
-the version number string at the top of "ventilation_machine.ino" and updated the Software Changelog
-in the main AmboVent readme.
+  the version number string at the top of "ventilation_machine.ino" and updated the Software 
+  Changelog in the main AmboVent readme.
 
 **Arduino IDE build output:**  
 
-<!-- YYYYMMDD-HHMMhrs is the date and time you ran the build command; ex: 20200420-0049hrs means 20
-April 2020 at 0049 hrs (12:49AM--just after midnight). Also be sure to include at least the first 7
-chars of your git hash for the commit you had checked out when you performed the build. Lastly,
-specify your Arduino IDE version number and board. The board should be Nano unless you know
-differently. -->
+<!-- Description of the output below:
+YYYY.MM.DD-HH:MMhrs is the date and time you ran the build command; ex: 2020.04.20-00:49hrs means 20
+April 2020 at 00:49 hrs (12:49AM--just after midnight). Also be sure to include at least the first 7
+chars of your git hash for the commit you had checked out when you performed the build. Also 
+specify your Arduino IDE version number and board. The board when building should be the Arduino 
+Nano unless you know differently. -->
 
-YYYYMMDD-HHMMhrs (git hash <7+ char git hash>) (IDE ?.?.??) (board: Arduino Nano)
+*Date and time I performed the build:* YYYY.MM.DD-HH:MMhrs  
+*Git hash of the commit I performed the build on:* <7+ char git hash>  
+*IDE Version:* ?.?.??  
+*Board I had selected during the build:* Arduino Nano  
+*Pull Request this build is for:*  #???  
 
-    Sketch uses 99999 bytes (99%) of program storage space. Maximum is 32256 bytes.
-    Global variables use 9999 bytes (99%) of dynamic memory, leaving 9999 bytes for local variables. Maximum is 2048 bytes.
+*Last 2 lines of the build output, to see how the binary size changed:*  
+
+Sketch uses 99999 bytes (99%) of program storage space. Maximum is 32256 bytes.
+Global variables use 9999 bytes (99%) of dynamic memory, leaving 9999 bytes for local variables. Maximum is 2048 bytes.
 
 <!-- Example:
 
-20200420-0049hrs (git hash 493985f; branch fix_formatting) (IDE 1.8.12) (Arduino Nano) - PR #46: https://github.com/AmboVent-1690-108/AmboVent/pull/46
+*Date and time I performed the build:* 2020.04.20-00:49hrs  
+*Git hash of the commit I performed the build on:* 493985f  
+*IDE Version:* 1.8.12  
+*Board I had selected during the build:* Arduino Nano  
+*Pull Request this build is for:* #46  
 
-    Sketch uses 18176 bytes (56%) of program storage space. Maximum is 32256 bytes.
-    Global variables use 1046 bytes (51%) of dynamic memory, leaving 1002 bytes for local variables. Maximum is 2048 bytes.
+*Last 2 lines of the build output, to see how the binary size changed:*  
+
+Sketch uses 18176 bytes (56%) of program storage space. Maximum is 32256 bytes.
+Global variables use 1046 bytes (51%) of dynamic memory, leaving 1002 bytes for local variables. Maximum is 2048 bytes.
 
 -->
 
