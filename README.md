@@ -5,7 +5,6 @@
     Global Partnership for the Greater good
     Leading Open Source Code Mentality Initiative
 
-
 ## Emergency ventilation initiative coming out of Israel
 
 ## The device was not tested yet for its performance or safety; it is NOT approved for clinical use
@@ -22,6 +21,10 @@
 1. The garage program by Microsoft Israel
 1. IDC Herzeliya
 1. and others...
+
+## Developer Chat on Gitter:
+
+[![Gitter](https://badges.gitter.im/AmboVent-Ventilator/community.svg)](https://gitter.im/AmboVent-Ventilator/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## [AmboVent Website](https://1nn0v8ter.rocks/AmboVent-1690-108)
 
