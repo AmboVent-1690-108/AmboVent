@@ -1,0 +1,19 @@
+language: python
+python:
+    - "2.7"
+
+# Cache PlatformIO packages using Travis CI container-based infrastructure
+sudo: false
+cache:
+    directories:
+        - "~/.platformio"
+
+env:
+    - PLATFORMIO_CI_SRC=3-Software/Arduino/ventilation_machine//ventilation_machine.ino
+
+install:
+    - pip install -U platformio
+
+
+script:
+    - platformio ci --lib=3-Software/Arduino/Libraries/Servo/ --lib=3-Software/Arduino/Libraries/SparkFun_MS5803-14BA_Breakout_Arduino_Library-master/ --lib=3-Software/Arduino/Libraries/Arduino-LiquidCrystal-I2C-library-master/ --lib=3-Software/Arduino/Libraries/ArduinoUniqueID/ --board=uno
